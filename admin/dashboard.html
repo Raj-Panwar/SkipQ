@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SkipQ Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="admin-header-brand">
+        <span class="admin-brand-mark-sm">
+          <svg viewBox="0 0 40 40" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3"/>
+            <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="29" cy="29" r="4.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="admin-header-title">SkipQ Admin</span>
+      </div>
+      <nav class="admin-header-nav" aria-label="Admin navigation">
+  <a href="./dashboard.html"
+     class="admin-nav-link is-active"
+     aria-current="page">
+    Dashboard
+  </a>
+
+  <a href="./inventory.html"
+     class="admin-nav-link">
+    Inventory
+  </a>
+</nav>
+
+      <div class="admin-header-actions">
+        <button type="button" class="btn btn-sm btn-secondary" id="refreshBtn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.5 15a9 9 0 1 1-2-7.3L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Refresh
+        </button>
+        <button type="button" class="btn btn-sm btn-danger" id="logoutAdminBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+
+    <!-- Stats cards -->
+    <section class="admin-stats-grid" aria-label="Today's summary">
+      <div class="stat-card card">
+        <p class="stat-label">Total orders today</p>
+        <p class="stat-value" id="statOrdersToday">0</p>
+        <p class="stat-sub">Since midnight</p>
+      </div>
+      <div class="stat-card card">
+        <p class="stat-label">Active tokens</p>
+        <p class="stat-value stat-value-accent" id="statActiveTokens">0</p>
+        <p class="stat-sub">In queue now</p>
+      </div>
+      <div class="stat-card card">
+        <p class="stat-label">Pending print jobs</p>
+        <p class="stat-value stat-value-warning" id="statPendingPrint">0</p>
+        <p class="stat-sub">Awaiting action</p>
+      </div>
+      <div class="stat-card card">
+        <p class="stat-label">Revenue today</p>
+        <p class="stat-value stat-value-green" id="statRevenue">₹0</p>
+        <p class="stat-sub">Completed orders</p>
+      </div>
+    </section>
+
+    <!-- Orders table -->
+    <section class="admin-section">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">Recent orders</h2>
+        <span class="admin-section-hint">Auto-refreshes every 30 s</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="admin-table" aria-label="Recent orders">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Student</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr class="table-empty">
+              <td colspan="7">Loading orders…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Print jobs table -->
+    <section class="admin-section">
+      <div class="admin-section-header">
+        <h2 class="admin-section-title">Print jobs</h2>
+        <span class="admin-section-hint">PDF print requests</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="admin-table" aria-label="Print jobs">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Student</th>
+              <th>File</th>
+              <th>Pages</th>
+              <th>Settings</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="printTableBody">
+            <tr class="table-empty">
+              <td colspan="7">Loading print jobs…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="../js/admin/adminDashboardPage.js"></script>
+</body>
+</html>

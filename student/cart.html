@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your cart — SkipQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+<body class="app-body">
+
+  <header class="app-header app-header-simple">
+    <div class="app-header-row">
+      <a href="./menu.html" class="back-link" aria-label="Back to menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <h1 class="page-title">Your cart</h1>
+      <span class="header-spacer" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <section class="cart-items-list" id="cartItemsList" aria-live="polite">
+      <!-- Cart item rows injected by cartPage.js -->
+    </section>
+
+    <div class="empty-state-block" id="emptyCartState" hidden>
+      <p class="empty-state-icon" aria-hidden="true">🛒</p>
+      <h2>Your cart is empty</h2>
+      <p>Browse the menu and add a few essentials before checking out.</p>
+      <a href="./menu.html" class="btn btn-primary">Browse menu</a>
+    </div>
+
+    <section class="order-summary-card card" id="orderSummaryCard" hidden>
+      <h2 class="order-summary-title">Order summary</h2>
+
+      <div class="order-summary-row">
+        <span>Subtotal</span>
+        <span id="summarySubtotal">₹0</span>
+      </div>
+      <div class="order-summary-row">
+        <span>Items</span>
+        <span id="summaryItemCount">0</span>
+      </div>
+      <div class="order-summary-row order-summary-total">
+        <span>Total</span>
+        <span id="summaryTotal">₹0</span>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-block" id="checkoutBtn">
+        <span class="btn-label">Checkout &amp; get token</span>
+      </button>
+    </section>
+
+  </main>
+
+  <script type="module" src="../js/student/cartPage.js"></script>
+</body>
+</html>

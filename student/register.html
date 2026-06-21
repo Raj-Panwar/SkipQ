@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — SkipQ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+
+<body class="auth-body">
+
+  <div class="auth-screen">
+
+    <header class="auth-topbar">
+      <span class="brand-mark">
+        <svg viewBox="0 0 40 40" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3"/>
+          <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="29" cy="29" r="4.5" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand-name-dark">SkipQ</span>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="auth-hero" aria-label="App introduction">
+
+      <h1 class="hero-headline">
+        Order now.<br>
+        Pick up when called.
+      </h1>
+
+      <p class="hero-subline">
+        No more standing in line for notebooks, pens, and prints.
+      </p>
+
+      <div class="token-card">
+
+        <div class="token-card-top">
+          <div>
+            <p class="token-label">Now serving</p>
+            <p class="token-number">#046</p>
+          </div>
+
+          <div class="token-wait">
+            <p class="token-label">Avg. wait</p>
+            <p class="token-wait-value">3 min</p>
+          </div>
+        </div>
+
+        <div class="token-timeline">
+          <span class="timeline-chip">042</span>
+          <span class="timeline-chip">043</span>
+          <span class="timeline-chip">044</span>
+          <span class="timeline-chip">045</span>
+          <span class="timeline-chip is-current">046</span>
+          <span class="timeline-chip is-next">047</span>
+          <span class="timeline-chip is-next">048</span>
+        </div>
+
+        <div class="token-progress-track">
+          <div class="token-progress-fill"></div>
+        </div>
+
+        <p class="token-status">
+          <span class="status-dot"></span>
+          Token #046 is being prepared — almost ready
+        </p>
+
+      </div>
+
+      <p class="hero-microcopy">
+        Your stationery, without the wait.
+      </p>
+
+    </section>
+
+    <!-- Register Form -->
+    <main class="auth-sheet" aria-label="Register">
+
+      <div class="sheet-handle"></div>
+
+      <div class="auth-heading">
+        <h2>Create your account</h2>
+        <p>Join SkipQ and start skipping the queue today.</p>
+      </div>
+
+      <div id="formAlert" class="alert alert-error" hidden></div>
+
+      <form id="registerForm" class="form" novalidate>
+
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            class="input"
+            placeholder="Enter your full name"
+            required
+          >
+          <p class="field-error" id="fullNameError" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="email">College Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="input"
+            placeholder="you@college.edu"
+            required
+          >
+          <p class="field-error" id="emailError" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            class="input"
+            placeholder="9876543210"
+            required
+          >
+          <p class="field-error" id="phoneError" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+
+          <div class="input-with-action">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input"
+              placeholder="Create a password"
+              required
+            >
+
+            <button
+              type="button"
+              class="input-action"
+              id="togglePassword">
+              Show
+            </button>
+          </div>
+
+          <p class="field-error" id="passwordError" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            class="input"
+            placeholder="Confirm your password"
+            required
+          >
+
+          <p class="field-error" id="confirmPasswordError" hidden></p>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          id="submitBtn">
+          Create Account
+        </button>
+
+      </form>
+
+      <p class="auth-switch">
+        Already have an account?
+        <a href="./login.html">Log in</a>
+      </p>
+
+      <p class="auth-footer">
+        Are you staff?
+        <a href="../admin/login.html">Go to admin login</a>
+      </p>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="../js/student/registerPage.js"></script>
+
+</body>
+</html>

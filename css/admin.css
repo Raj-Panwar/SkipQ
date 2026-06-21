@@ -1,0 +1,620 @@
+/* ==========================================================================
+   SkipQ — admin.css
+   Admin portal styles: login, dashboard header, stat cards, data tables.
+   Uses the same CSS variables defined in base.css — no new tokens needed.
+   Mobile-first.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------- */
+/* Admin auth screen (login.html)                                          */
+/* ---------------------------------------------------------------------- */
+.admin-auth-body {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--color-accent-soft) 0%, var(--color-bg) 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.admin-auth-screen {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.admin-auth-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-primary);
+}
+
+.admin-brand-mark {
+  display: flex;
+  color: var(--color-accent-bright);
+}
+
+.admin-brand-name {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.admin-brand-role {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.admin-auth-card {
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.admin-hint {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-accent-soft);
+  border-color: rgba(82, 183, 136, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.admin-hint-label {
+  font-weight: 600;
+  color: var(--color-success);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+
+.admin-hint code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Admin shell (dashboard.html)                                            */
+/* ---------------------------------------------------------------------- */
+.admin-body {
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+.admin-header {
+  background-color: var(--color-hero-bg);
+  color: var(--color-hero-text);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--color-hero-border);
+}
+
+.admin-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.admin-header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.admin-brand-mark-sm {
+  display: flex;
+  color: var(--color-accent-bright);
+}
+
+.admin-header-title {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-5) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Stats grid                                                              */
+/* ---------------------------------------------------------------------- */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.stat-card {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1;
+}
+
+.stat-value-accent  { color: var(--color-primary); }
+.stat-value-warning { color: var(--color-warning); }
+.stat-value-green   { color: var(--color-success); }
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Section headers                                                         */
+/* ---------------------------------------------------------------------- */
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.admin-section-title {
+  font-size: 1.125rem;
+  color: var(--color-ink);
+}
+
+.admin-section-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Data tables                                                             */
+/* ---------------------------------------------------------------------- */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  min-width: 640px;
+}
+
+.admin-table thead {
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table th {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast);
+}
+
+.admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--color-bg);
+}
+
+.table-cell {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+
+.table-empty td {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.admin-token {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-accent-bright);
+}
+
+.admin-amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.table-student {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.table-student-name {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.table-student-roll {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.table-items {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}
+
+.table-filename {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.table-time {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.table-actions {
+  min-width: 120px;
+}
+
+.action-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.action-done {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* Small button variant for table actions */
+.btn-sm {
+  font-size: 0.8125rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-danger {
+  background-color: var(--color-error);
+  color: #FFFFFF;
+  border-color: var(--color-error);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c0303c;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Responsive — desktop stat grid 4 columns                               */
+/* ---------------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .admin-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+/* ==========================================================================
+   APPEND THIS BLOCK TO THE BOTTOM OF admin.css
+   Inventory page: header nav links, low-stock banner, stock pills,
+   inline stock editor, and the add/edit/delete modals.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------- */
+/* Header nav links (dashboard / inventory)                                */
+/* ---------------------------------------------------------------------- */
+.admin-header-nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.admin-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-hero-muted);
+  padding: 6px 2px;
+  border-bottom: 2px solid transparent;
+}
+
+.admin-nav-link:hover {
+  color: var(--color-hero-text);
+  text-decoration: none;
+}
+
+.admin-nav-link.is-active {
+  color: var(--color-hero-text);
+  border-bottom-color: var(--color-accent-bright);
+}
+
+@media (min-width: 640px) {
+  .admin-header-nav {
+    display: flex;
+  }
+}
+
+/* Mobile: nav links as a horizontal scroll row beneath the header */
+.admin-header-nav-mobile {
+  display: flex;
+  gap: var(--space-4);
+  padding: 0 var(--space-5) var(--space-2);
+  overflow-x: auto;
+}
+
+@media (min-width: 640px) {
+  .admin-header-nav-mobile {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Stat value variants                                                    */
+/* ---------------------------------------------------------------------- */
+.stat-value-danger { color: var(--color-error); }
+
+/* ---------------------------------------------------------------------- */
+/* Low stock banner                                                        */
+/* ---------------------------------------------------------------------- */
+.low-stock-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: #FFF3CD;
+  border: 1px solid rgba(244, 162, 97, 0.35);
+  border-radius: var(--radius-md);
+  color: #7A4F00;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.low-stock-banner svg {
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Product cell in inventory table                                         */
+/* ---------------------------------------------------------------------- */
+.table-product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.table-product-image-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-accent-soft);
+  color: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.table-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.table-product-name {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.table-product-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Stock cell — pill + inline quick-edit                                   */
+/* ---------------------------------------------------------------------- */
+.stock-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 160px;
+}
+
+.stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.stock-pill-ok {
+  background-color: var(--color-accent-soft);
+  color: var(--color-success);
+}
+
+.stock-pill-low {
+  background-color: #FFF3CD;
+  color: #946C00;
+}
+
+.stock-pill-out {
+  background-color: var(--color-error-soft);
+  color: var(--color-error);
+}
+
+.stock-inline-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.stock-quick-input {
+  width: 64px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.stock-quick-input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Modal — header, form rows, actions                                      */
+/* ---------------------------------------------------------------------- */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  color: var(--color-ink);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--color-text);
+}
+
+.modal-sm {
+  max-width: 380px;
+}
+
+.modal-body-text {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236C757D' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Responsive — stack form rows on narrow screens                          */
+/* ---------------------------------------------------------------------- */
+@media (max-width: 420px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    padding: var(--space-5);
+  }
+}

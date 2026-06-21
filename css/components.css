@@ -1,0 +1,252 @@
+/* ==========================================================================
+   SkipQ — components.css
+   Reusable UI components: buttons, cards, forms, alerts, badges, modals.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------- */
+/* Card                                                                    */
+/* ---------------------------------------------------------------------- */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Buttons                                                                 */
+/* ---------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  user-select: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-danger {
+  background-color: var(--color-error);
+  color: #FFFFFF;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Loading state for buttons */
+.btn.is-loading .btn-label {
+  visibility: hidden;
+}
+
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+.btn.is-loading {
+  position: relative;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Forms                                                                   */
+/* ---------------------------------------------------------------------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  outline: none;
+}
+
+.input.is-invalid {
+  border-color: var(--color-error);
+}
+
+.input.is-invalid:focus {
+  box-shadow: 0 0 0 3px var(--color-error-soft);
+}
+
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-action .input {
+  padding-right: 64px;
+}
+
+.input-action {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.input-action:hover {
+  background-color: var(--color-accent-soft);
+}
+
+.field-error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Alerts                                                                  */
+/* ---------------------------------------------------------------------- */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.alert-error {
+  background-color: var(--color-error-soft);
+  color: var(--color-error);
+  border-color: rgba(230, 57, 70, 0.2);
+}
+
+.alert-success {
+  background-color: var(--color-accent-soft);
+  color: var(--color-success);
+  border-color: rgba(82, 183, 136, 0.3);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Badges                                                                  */
+/* ---------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-placed { background-color: var(--color-accent-soft); color: var(--color-success); }
+.badge-preparing { background-color: #FFF3CD; color: #946C00; }
+.badge-ready { background-color: var(--color-accent); color: #FFFFFF; }
+.badge-completed { background-color: var(--color-border); color: var(--color-text-muted); }
+.badge-cancelled { background-color: var(--color-error-soft); color: var(--color-error); }
+
+/* ---------------------------------------------------------------------- */
+/* Modal (shared shell — used by admin pages)                              */
+/* ---------------------------------------------------------------------- */
+.modal-overlay[hidden] {
+  display: none !important;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(27, 67, 50, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 50;
+}
+
+.modal {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-6);
+}

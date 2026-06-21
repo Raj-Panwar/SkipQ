@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your token — SkipQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+<body class="app-body app-body-dark">
+
+  <header class="app-header app-header-dark">
+    <div class="app-header-row">
+      <a href="./menu.html" class="back-link back-link-light" aria-label="Back to menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <h1 class="page-title page-title-light">Your token</h1>
+      <span class="header-spacer" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <main class="app-main app-main-dark">
+
+    <section class="token-hero-card" aria-label="Token status">
+      <p class="token-hero-label">Your token</p>
+      <p class="token-hero-number" id="myTokenNumber">#052</p>
+      <span class="badge badge-preparing" id="statusBadge">Preparing</span>
+
+      <div class="serving-row">
+        <span>Now serving</span>
+        <strong id="nowServingNumber">#046</strong>
+      </div>
+
+      <div class="token-progress-track token-progress-track-large">
+        <div class="token-progress-fill" id="progressFill"></div>
+      </div>
+
+      <p class="wait-estimate">
+        Estimated wait: <strong id="waitEstimate">18 min</strong> · Position <strong id="queuePosition">6</strong> in line
+      </p>
+    </section>
+
+    <section class="queue-timeline-card card">
+      <p class="queue-timeline-label">Live queue timeline</p>
+      <div class="token-timeline token-timeline-light" id="tokenTimeline">
+        <span class="timeline-chip" data-served>042</span>
+        <span class="timeline-chip" data-served>043</span>
+        <span class="timeline-chip" data-served>044</span>
+        <span class="timeline-chip" data-served>045</span>
+        <span class="timeline-chip is-current">046</span>
+        <span class="timeline-chip is-next" id="myTokenChip">052</span>
+      </div>
+    </section>
+
+    <section class="order-summary-card card">
+      <h2 class="order-summary-title">Order summary</h2>
+      <ul class="order-summary-items" id="orderSummaryItems">
+        <!-- Injected by tokenPage.js -->
+      </ul>
+      <div class="order-summary-row order-summary-total">
+        <span>Total paid</span>
+        <span id="orderTotal">₹0</span>
+      </div>
+    </section>
+
+    <a href="./history.html" class="btn btn-secondary btn-block">View order history</a>
+
+  </main>
+
+  <script type="module" src="../js/student/tokenPage.js"></script>
+</body>
+</html>
