@@ -1,0 +1,23 @@
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Spring Boot
+backend/target/
+
+# Environment files
+.env
+application-local.properties
