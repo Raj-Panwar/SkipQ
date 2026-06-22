@@ -1,74 +1,57 @@
 // js/admin/inventoryPage.js
-// Admin inventory page controller.
-// Renders stats cards, the products table, and handles the
-// add/edit/delete product modals. All mutations go through
-// inventoryStore.js, which is the same module menuPage.js reads from —
-// so changes made here are visible on the student menu immediately.
 
 import {
-  getAllProducts,
-  getInventoryStats,
-  getLowStockProducts,
-  getOutOfStockProducts,
+  getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
-  LOW_STOCK_THRESHOLD,
-} from "./inventoryStore.js";
+} from "./productApi.js";
 import { showToast } from "../shared/toast.js";
 
 const ADMIN_SESSION_KEY = "skipq_admin_session";
+const LOW_STOCK_THRESHOLD = 10;
 
-//if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
-  //window.location.href = "./login.html";
-//}
+if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
+  window.location.href = "./login.html";
+}
 
-// Stats
-const statTotalProducts = document.getElementById("statTotalProducts");
-const statTotalStock    = document.getElementById("statTotalStock");
-const statOutOfStock    = document.getElementById("statOutOfStock");
-const statLowStock      = document.getElementById("statLowStock");
+const statTotalProducts  = document.getElementById("statTotalProducts");
+const statTotalStock     = document.getElementById("statTotalStock");
+const statOutOfStock     = document.getElementById("statOutOfStock");
+const statLowStock       = document.getElementById("statLowStock");
 
 const lowStockBanner     = document.getElementById("lowStockBanner");
 const lowStockBannerText = document.getElementById("lowStockBannerText");
 
-const productsTableBody = document.getElementById("productsTableBody");
-const addProductBtn     = document.getElementById("addProductBtn");
-const logoutAdminBtn    = document.getElementById("logoutAdminBtn");
+const productsTableBody  = document.getElementById("productsTableBody");
+const addProductBtn      = document.getElementById("addProductBtn");
+const logoutAdminBtn     = document.getElementById("logoutAdminBtn");
 
-// Product modal
-const productModalOverlay = document.getElementById("productModalOverlay");
-const productModalTitle   = document.getElementById("productModalTitle");
-const productForm         = document.getElementById("productForm");
-const productIdInput      = document.getElementById("productId");
-const productNameInput    = document.getElementById("productName");
-const productCategoryInput = document.getElementById("productCategory");
-const productDescriptionInput = document.getElementById("productDescription");
-const productPriceInput   = document.getElementById("productPrice");
-const productStockInput   = document.getElementById("productStock");
-const productStatusInput  = document.getElementById("productStatus");
-const closeModalBtn       = document.getElementById("closeModalBtn");
-const cancelModalBtn      = document.getElementById("cancelModalBtn");
+const productModalOverlay      = document.getElementById("productModalOverlay");
+const productModalTitle        = document.getElementById("productModalTitle");
+const productForm              = document.getElementById("productForm");
+const productIdInput           = document.getElementById("productId");
+const productNameInput         = document.getElementById("productName");
+const productCategoryInput     = document.getElementById("productCategory");
+const productDescriptionInput  = document.getElementById("productDescription");
+const productPriceInput        = document.getElementById("productPrice");
+const productStockInput        = document.getElementById("productStock");
+const closeModalBtn            = document.getElementById("closeModalBtn");
+const cancelModalBtn           = document.getElementById("cancelModalBtn");
+const saveProductBtn           = document.getElementById("saveProductBtn");
 
-// Delete modal
 const deleteModalOverlay = document.getElementById("deleteModalOverlay");
 const deleteModalText    = document.getElementById("deleteModalText");
 const cancelDeleteBtn    = document.getElementById("cancelDeleteBtn");
 const confirmDeleteBtn   = document.getElementById("confirmDeleteBtn");
 
-let pendingDeleteId = null;
+let pendingDeleteId  = null;
+let currentProducts  = [];
 
 init();
 
 function init() {
   renderAll();
-  cancelDeleteBtn.addEventListener("click", () => {
-  console.log("Cancel button clicked");
-});
-
-confirmDeleteBtn.addEventListener("click", () => {
-  console.log("Delete button clicked");
-});
 
   addProductBtn.addEventListener("click", openCreateModal);
   closeModalBtn.addEventListener("click", closeProductModal);
@@ -100,28 +83,43 @@ confirmDeleteBtn.addEventListener("click", () => {
   });
 }
 
-function renderAll() {
-  renderStats();
-  renderLowStockBanner();
-  renderProductsTable();
+async function renderAll() {
+  setTableLoading(true);
+  try {
+    currentProducts = await getProducts();
+  } catch (error) {
+    showToast("Failed to load products: " + error.message, "error");
+    setTableLoading(false);
+    return;
+  }
+  renderStats(currentProducts);
+  renderLowStockBanner(currentProducts);
+  renderProductsTable(currentProducts);
+  setTableLoading(false);
+}
+
+function setTableLoading(loading) {
+  if (loading) {
+    productsTableBody.innerHTML = `
+      <tr class="table-empty"><td colspan="6">Loading products…</td></tr>`;
+  }
 }
 
 /* ==========================================================
    Stats + low stock banner
 ========================================================== */
 
-function renderStats() {
-  const stats = getInventoryStats();
-  statTotalProducts.textContent = String(stats.totalProducts);
-  statTotalStock.textContent = String(stats.totalStock);
-  statOutOfStock.textContent = String(stats.outOfStockCount);
-  statLowStock.textContent = String(stats.lowStockCount);
+function renderStats(products) {
+  statTotalProducts.textContent = String(products.length);
+  statTotalStock.textContent    = String(products.reduce((sum, p) => sum + (p.stock ?? 0), 0));
+  statOutOfStock.textContent    = String(products.filter((p) => p.stock === 0).length);
+  statLowStock.textContent      = String(products.filter((p) => p.stock > 0 && p.stock < LOW_STOCK_THRESHOLD).length);
 }
 
-function renderLowStockBanner() {
-  const lowStock = getLowStockProducts();
-  const outOfStock = getOutOfStockProducts();
-  const concerning = [...outOfStock, ...lowStock];
+function renderLowStockBanner(products) {
+  const concerning = products.filter(
+    (p) => p.stock === 0 || p.stock < LOW_STOCK_THRESHOLD
+  );
 
   if (concerning.length === 0) {
     lowStockBanner.hidden = true;
@@ -130,7 +128,6 @@ function renderLowStockBanner() {
 
   const names = concerning.slice(0, 3).map((p) => p.name).join(", ");
   const extra = concerning.length > 3 ? ` and ${concerning.length - 3} more` : "";
-
   lowStockBannerText.textContent =
     `${concerning.length} product${concerning.length === 1 ? "" : "s"} need attention: ${names}${extra}.`;
   lowStockBanner.hidden = false;
@@ -140,26 +137,28 @@ function renderLowStockBanner() {
    Products table
 ========================================================== */
 
-function renderProductsTable() {
-  const products = getAllProducts();
-
+function renderProductsTable(products) {
   if (products.length === 0) {
     productsTableBody.innerHTML = `
       <tr class="table-empty"><td colspan="6">No products yet. Click "Add product" to create one.</td></tr>`;
     return;
   }
-
   productsTableBody.replaceChildren(...products.map(buildProductRow));
 }
 
 function buildProductRow(product) {
-  const tr = document.createElement("tr");
+  const tr    = document.createElement("tr");
   tr.dataset.productId = String(product.id);
 
-  const isOut = product.stock === 0;
-  const isLow = product.stock > 0 && product.stock < LOW_STOCK_THRESHOLD;
+  const stock      = product.stock ?? 0;
+  const isOut      = stock === 0;
+  const isLow      = stock > 0 && stock < LOW_STOCK_THRESHOLD;
   const stockClass = isOut ? "stock-pill-out" : isLow ? "stock-pill-low" : "stock-pill-ok";
-  const stockLabel = isOut ? "Out of stock" : isLow ? "Low stock" : "In stock";
+  const stockLabel = isOut ? "Out of stock"   : isLow ? "Low stock"      : "In stock";
+
+  const status      = product.status ?? "ACTIVE";
+  const statusClass = status === "ACTIVE" ? "badge-ready" : "badge-cancelled";
+  const statusLabel = status === "ACTIVE" ? "Active"      : "Inactive";
 
   tr.innerHTML = `
     <td class="table-cell">
@@ -176,22 +175,20 @@ function buildProductRow(product) {
         </div>
       </div>
     </td>
-    <td class="table-cell">${product.category}</td>
+    <td class="table-cell">${product.category ?? ""}</td>
     <td class="table-cell"><span class="admin-amount">₹${product.price}</span></td>
     <td class="table-cell">
       <div class="stock-cell">
-        <span class="stock-pill ${stockClass}">${product.stock} · ${stockLabel}</span>
+        <span class="stock-pill ${stockClass}">${stock} · ${stockLabel}</span>
         <div class="stock-inline-edit">
-          <input type="number" class="stock-quick-input" min="0" value="${product.stock}"
+          <input type="number" class="stock-quick-input" min="0" value="${stock}"
             aria-label="Update stock for ${product.name}">
           <button type="button" class="btn btn-sm btn-secondary stock-update-btn">Update</button>
         </div>
       </div>
     </td>
     <td class="table-cell">
-      <span class="badge ${product.status === "ACTIVE" ? "badge-ready" : "badge-cancelled"}">
-        ${product.status === "ACTIVE" ? "Active" : "Inactive"}
-      </span>
+      <span class="badge ${statusClass}">${statusLabel}</span>
     </td>
     <td class="table-cell table-actions">
       <div class="action-btn-group">
@@ -204,7 +201,7 @@ function buildProductRow(product) {
   return tr;
 }
 
-function handleTableClick(event) {
+async function handleTableClick(event) {
   const row = event.target.closest("tr");
   if (!row || !row.dataset.productId) return;
   const productId = Number(row.dataset.productId);
@@ -220,12 +217,28 @@ function handleTableClick(event) {
   }
 
   if (event.target.closest(".stock-update-btn")) {
-    const input = row.querySelector(".stock-quick-input");
+    const input    = row.querySelector(".stock-quick-input");
     const newStock = Math.max(0, Number(input.value) || 0);
-    const product = updateProduct(productId, { stock: newStock });
-    if (product) {
-      showToast(`Stock updated — ${product.name}: ${product.stock} units`, "success");
-      renderAll();
+    const existing = currentProducts.find((p) => p.id === productId);
+    if (!existing) return;
+
+    const btn = event.target.closest(".stock-update-btn");
+    btn.disabled = true;
+
+    try {
+      const updated = await updateProduct(productId, {
+        name:        existing.name,
+        category:    existing.category,
+        description: existing.description,
+        price:       existing.price,
+        stock:       newStock,
+        status:      existing.status,
+      });
+      showToast(`Stock updated — ${updated.name}: ${updated.stock} units`, "success");
+      await renderAll();
+    } catch (error) {
+      showToast("Failed to update stock: " + error.message, "error");
+      btn.disabled = false;
     }
   }
 }
@@ -235,39 +248,30 @@ function handleTableClick(event) {
 ========================================================== */
 
 function openCreateModal() {
-  // Close delete modal if open
-  closeDeleteModal();
-
   productModalTitle.textContent = "Add product";
   productForm.reset();
   productIdInput.value = "";
-  productStatusInput.value = "ACTIVE";
-
   clearFormErrors();
-
   productModalOverlay.hidden = false;
   productNameInput.focus();
 }
 
 function openEditModal(productId) {
-  // Close delete modal if open
-  closeDeleteModal();
-
-  const product = getAllProducts().find((p) => p.id === productId);
+  const product = currentProducts.find((p) => p.id === productId);
   if (!product) return;
 
-  productModalTitle.textContent = "Edit product";
+  productModalTitle.textContent     = "Edit product";
+  productIdInput.value              = String(product.id);
+  productNameInput.value            = product.name;
+  productCategoryInput.value        = product.category ?? "Notebooks";
+  productDescriptionInput.value     = product.description ?? "";
+  productPriceInput.value           = String(product.price);
+  productStockInput.value           = String(product.stock ?? 0);
 
-  productIdInput.value = String(product.id);
-  productNameInput.value = product.name;
-  productCategoryInput.value = product.category;
-  productDescriptionInput.value = product.description ?? "";
-  productPriceInput.value = String(product.price);
-  productStockInput.value = String(product.stock);
-  productStatusInput.value = product.status;
+  const productStatusInput = document.getElementById("productStatus");
+  if (productStatusInput) productStatusInput.value = product.status ?? "ACTIVE";
 
   clearFormErrors();
-
   productModalOverlay.hidden = false;
   productNameInput.focus();
 }
@@ -277,18 +281,18 @@ function closeProductModal() {
 }
 
 function clearFormErrors() {
-  document.getElementById("productNameError").hidden = true;
+  document.getElementById("productNameError").hidden  = true;
   document.getElementById("productPriceError").hidden = true;
   document.getElementById("productStockError").hidden = true;
 }
 
-function handleProductFormSubmit(event) {
+async function handleProductFormSubmit(event) {
   event.preventDefault();
   clearFormErrors();
 
-  const name = productNameInput.value.trim();
-  const price = Number(productPriceInput.value);
-  const stock = Number(productStockInput.value);
+  const name   = productNameInput.value.trim();
+  const price  = Number(productPriceInput.value);
+  const stock  = Number(productStockInput.value);
 
   let valid = true;
   if (!name) {
@@ -305,33 +309,44 @@ function handleProductFormSubmit(event) {
   }
   if (!valid) return;
 
-  const data = {
+  const productStatusInput = document.getElementById("productStatus");
+
+  const payload = {
     name,
-    category: productCategoryInput.value,
+    category:    productCategoryInput.value,
     description: productDescriptionInput.value.trim(),
     price,
     stock,
-    status: productStatusInput.value,
+    status:      productStatusInput ? productStatusInput.value : "ACTIVE",
   };
 
   const existingId = productIdInput.value;
 
-  if (existingId) {
-    updateProduct(Number(existingId), data);
-    showToast(`${name} updated`, "success");
-  } else {
-    createProduct(data);
-    showToast(`${name} added to catalog`, "success");
-  }
+  saveProductBtn.disabled = true;
+  saveProductBtn.classList.add("is-loading");
 
-  closeProductModal();
-  renderAll();
+  try {
+    if (existingId) {
+      await updateProduct(Number(existingId), payload);
+      showToast(`${name} updated`, "success");
+    } else {
+      await createProduct(payload);
+      showToast(`${name} added to catalog`, "success");
+    }
+    closeProductModal();
+    await renderAll();
+  } catch (error) {
+    showToast((existingId ? "Failed to update" : "Failed to create") + " product: " + error.message, "error");
+  } finally {
+    saveProductBtn.disabled = false;
+    saveProductBtn.classList.remove("is-loading");
+  }
 }
 
 function showFieldError(id, message) {
-  const el = document.getElementById(id);
+  const el      = document.getElementById(id);
   el.textContent = message;
-  el.hidden = false;
+  el.hidden      = false;
 }
 
 /* ==========================================================
@@ -339,17 +354,12 @@ function showFieldError(id, message) {
 ========================================================== */
 
 function openDeleteModal(productId) {
-  // Close product modal first
-  closeProductModal();
-
-  const product = getAllProducts().find((p) => p.id === productId);
+  const product = currentProducts.find((p) => p.id === productId);
   if (!product) return;
 
-  pendingDeleteId = productId;
-
+  pendingDeleteId          = productId;
   deleteModalText.textContent =
     `This will permanently remove "${product.name}" from the catalog.`;
-
   deleteModalOverlay.hidden = false;
 }
 
@@ -358,24 +368,20 @@ function closeDeleteModal() {
   pendingDeleteId = null;
 }
 
-function handleConfirmDelete() {
+async function handleConfirmDelete() {
   if (pendingDeleteId === null) return;
 
-  const product = getAllProducts().find(
-    (p) => p.id === pendingDeleteId
-  );
+  const product = currentProducts.find((p) => p.id === pendingDeleteId);
+  confirmDeleteBtn.disabled = true;
 
-  const removed = deleteProduct(pendingDeleteId);
-
-  if (removed) {
-    showToast(
-      `${product?.name ?? "Product"} deleted`,
-      "success"
-    );
+  try {
+    await deleteProduct(pendingDeleteId);
+    showToast(`${product?.name ?? "Product"} deleted`, "info");
+    closeDeleteModal();
+    await renderAll();
+  } catch (error) {
+    showToast("Failed to delete product: " + error.message, "error");
+  } finally {
+    confirmDeleteBtn.disabled = false;
   }
-
-  deleteModalOverlay.hidden = true;
-  pendingDeleteId = null;
-
-  renderAll();
 }
