@@ -19,12 +19,23 @@ public class Order {
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
+    @Column(name = "token_number")
+    private Integer tokenNumber;
+
+    public Integer getTokenNumber() {
+        return tokenNumber;
+    }
+
+    public void setTokenNumber(Integer tokenNumber) {
+        this.tokenNumber = tokenNumber;
+    }
 
     @Column(nullable = false)
     private String status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
@@ -51,4 +62,5 @@ public class Order {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
+    
 }

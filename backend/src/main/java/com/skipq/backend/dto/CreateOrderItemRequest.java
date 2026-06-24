@@ -1,30 +1,18 @@
-package com.skipq.backend.entity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import java.math.BigDecimal;
+package com.skipq.backend.dto;
 
-@Entity
-@Table(name = "order_items")
-public class OrderItem {
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private Long productId;
-
-    private String productName;
-
-    private Integer quantity;
-    private Integer copies;
-
-    private BigDecimal price;
+public class CreateOrderItemRequest {
     private String itemType;
-    private String fileName;
-    private Integer pages;
-    private String colorMode;
-    private String sided;
-    private String paperSize;
+
+private String fileName;
+private Integer pages;
+private Integer copies;
+private String colorMode;
+private String sided;
+private String paperSize;
+private Double totalPrice;
     public String getItemType() {
     return itemType;
 }
@@ -81,28 +69,23 @@ public void setPaperSize(String paperSize) {
     this.paperSize = paperSize;
 }
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+public Double getTotalPrice() {
+    return totalPrice;
+}
 
-    public OrderItem() {}
+public void setTotalPrice(Double totalPrice) {
+    this.totalPrice = totalPrice;
+}
+ 
+    private Long productId;
 
-    public Long getId() { return id; }
+    private Integer quantity;
+
+    public CreateOrderItemRequest() {}
 
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
 
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
-
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
-
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-    
-    @JsonIgnore
-    public Order getOrder() { return order; }
-
-    public void setOrder(Order order) { this.order = order; }
 }

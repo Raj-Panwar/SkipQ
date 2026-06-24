@@ -1,36 +1,34 @@
 // js/admin/adminDashboardPage.js
-// Admin dashboard page controller.
-// Renders live-ish stats cards, recent orders table, and print jobs table.
-// Status updates are persisted in localStorage via adminStore.js.
+//
+// Fully connected to the real backend via adminApi.js.
+// adminStore.js is no longer imported. No mock/seed data is used.
+// All orders and print jobs come from GET /api/orders.
+// order.tokenNumber is used directly — no derivation from order.id.
 
 import {
-  getOrders,
-  getPrintJobs,
   getDashboardStats,
-  updateOrderStatus,
-  updatePrintJobStatus,
-  ORDER_STATUSES,
-  PRINT_JOB_STATUSES,
-} from "./adminStore.js";
+  updateOrderStatus
+} from "./adminApi.js";
 import { showToast } from "../shared/toast.js";
-import { formatCurrency, formatDate, formatTime } from "../utils/formatters.js";
 
 const ADMIN_SESSION_KEY = "skipq_admin_session";
 
-// Guard: redirect to login if no admin session.
 if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
   window.location.href = "./login.html";
 }
 
-const statOrdersEl = document.getElementById("statOrdersToday");
-const statTokensEl = document.getElementById("statActiveTokens");
-const statPrintEl = document.getElementById("statPendingPrint");
+// Stat card elements
+const statOrdersEl  = document.getElementById("statOrdersToday");
+const statTokensEl  = document.getElementById("statActiveTokens");
+const statPrintEl   = document.getElementById("statPendingPrint");
 const statRevenueEl = document.getElementById("statRevenue");
 
+// Table bodies
 const ordersTableBody = document.getElementById("ordersTableBody");
-const printTableBody = document.getElementById("printTableBody");
+const printTableBody  = document.getElementById("printTableBody");
 
-const refreshBtn = document.getElementById("refreshBtn");
+// Header buttons
+const refreshBtn     = document.getElementById("refreshBtn");
 const logoutAdminBtn = document.getElementById("logoutAdminBtn");
 
 let refreshInterval = null;
@@ -56,75 +54,87 @@ function init() {
   printTableBody.addEventListener("click", handlePrintAction);
 }
 
-function renderAll() {
-  renderStats();
-  renderOrdersTable();
-  renderPrintTable();
+// ---------------------------------------------------------------------------
+// Main render
+// ---------------------------------------------------------------------------
+
+async function renderAll() {
+  setTablesLoading();
+
+  let stats;
+  try {
+    stats = await getDashboardStats();
+  } catch (error) {
+    showToast("Unable to load dashboard data", "error");
+    setTablesError();
+    return;
+  }
+
+  renderStats(stats);
+  renderOrdersTable(stats.orders);
+  renderPrintTable(stats.orders);
 }
 
-/* ==========================================================
-   Stats cards
-========================================================== */
+// ---------------------------------------------------------------------------
+// Stats cards
+// ---------------------------------------------------------------------------
 
-function renderStats() {
-  const stats = getDashboardStats();
+function renderStats(stats) {
   animateCount(statOrdersEl, stats.totalOrdersToday);
   animateCount(statTokensEl, stats.activeTokens);
-  animateCount(statPrintEl, stats.pendingPrintJobs);
+  animateCount(statPrintEl,  stats.pendingPrintJobs);
   statRevenueEl.textContent = formatCurrency(stats.revenueToday);
 }
 
 function animateCount(el, target) {
-  const start = Number(el.textContent) || 0;
+  const start    = Number(el.textContent) || 0;
   if (start === target) return;
   const duration = 500;
-  const startTime = performance.now();
+  const t0       = performance.now();
   function step(now) {
-    const t = Math.min((now - startTime) / duration, 1);
+    const t = Math.min((now - t0) / duration, 1);
     el.textContent = Math.round(start + (target - start) * t);
     if (t < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
-/* ==========================================================
-   Orders table
-========================================================== */
+// ---------------------------------------------------------------------------
+// Orders table
+// ---------------------------------------------------------------------------
 
-function renderOrdersTable() {
-  const orders = getOrders().slice(0, 15); // show latest 15
-
-  if (orders.length === 0) {
+function renderOrdersTable(orders) {
+  if (!orders || orders.length === 0) {
     ordersTableBody.innerHTML = `
       <tr class="table-empty">
-        <td colspan="7">No orders yet today.</td>
+        <td colspan="7">No orders yet.</td>
       </tr>`;
     return;
   }
 
   ordersTableBody.replaceChildren(
-    ...orders.map(buildOrderRow)
+    ...orders.slice(0, 15).map(buildOrderRow)
   );
 }
 
 function buildOrderRow(order) {
   const tr = document.createElement("tr");
-  tr.dataset.orderId = String(order.orderId);
+  tr.dataset.orderId = String(order.id);
 
-  const isTerminal = [ORDER_STATUSES.COMPLETED, ORDER_STATUSES.CANCELLED].includes(order.status);
+  const isTerminal =
+    order.status === "COMPLETED" || order.status === "CANCELLED";
 
   tr.innerHTML = `
     <td class="table-cell">
-      <span class="admin-token">${order.tokenNumber}</span>
+      <span class="admin-token">#${order.tokenNumber}</span>
     </td>
     <td class="table-cell">
       <div class="table-student">
-        <span class="table-student-name">${order.studentName}</span>
-        <span class="table-student-roll">${order.rollNumber}</span>
+        <span class="table-student-name">${order.studentName ?? "—"}</span>
       </div>
     </td>
     <td class="table-cell table-items">
-      ${order.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}
+      ${buildItemsSummary(order.items)}
     </td>
     <td class="table-cell">
       <span class="admin-amount">${formatCurrency(order.totalAmount)}</span>
@@ -133,22 +143,26 @@ function buildOrderRow(order) {
       <span class="badge ${statusBadgeClass(order.status)}">${order.status}</span>
     </td>
     <td class="table-cell table-time">
-      <span>${formatTime(order.placedAt)}</span>
+      ${formatTime(order.createdAt)}
     </td>
     <td class="table-cell table-actions">
       ${isTerminal
         ? `<span class="action-done">—</span>`
         : `<div class="action-btn-group">
-             ${order.status === ORDER_STATUSES.PLACED
-               ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="${ORDER_STATUSES.PREPARING}">Accept</button>`
+             ${order.status === "PLACED"
+               ? `<button class="btn btn-sm btn-secondary order-action-btn"
+                    data-next="PREPARING">Accept</button>`
                : ""}
-             ${order.status === ORDER_STATUSES.PREPARING
-               ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="${ORDER_STATUSES.READY}">Mark Ready</button>`
+             ${order.status === "PREPARING"
+               ? `<button class="btn btn-sm btn-secondary order-action-btn"
+                    data-next="READY">Mark Ready</button>`
                : ""}
-             ${order.status === ORDER_STATUSES.READY
-               ? `<button class="btn btn-sm btn-primary order-action-btn" data-next="${ORDER_STATUSES.COMPLETED}">Mark Served</button>`
+             ${order.status === "READY"
+               ? `<button class="btn btn-sm btn-primary order-action-btn"
+                    data-next="COMPLETED">Mark Served</button>`
                : ""}
-             <button class="btn btn-sm btn-danger order-action-btn" data-next="${ORDER_STATUSES.CANCELLED}">Cancel</button>
+             <button class="btn btn-sm btn-danger order-action-btn"
+               data-next="CANCELLED">Cancel</button>
            </div>`
       }
     </td>
@@ -157,7 +171,20 @@ function buildOrderRow(order) {
   return tr;
 }
 
-function handleOrderAction(event) {
+function buildItemsSummary(items) {
+  if (!items || items.length === 0) return "—";
+  return items
+    .map((i) =>
+      i.itemType === "print"
+        ? `Print: ${i.fileName ?? i.productName ?? "document"}`
+        : `${i.quantity}× ${i.productName ?? "item"}`
+    )
+    .join(", ");
+}
+
+// Status action buttons — visual only until backend adds PATCH endpoint.
+// TODO: when PATCH /api/orders/{id}/status is added, call it here.
+async function handleOrderAction(event) {
   const btn = event.target.closest(".order-action-btn");
   if (!btn) return;
 
@@ -165,29 +192,41 @@ function handleOrderAction(event) {
   const orderId = Number(row.dataset.orderId);
   const nextStatus = btn.dataset.next;
 
-  const success = updateOrderStatus(orderId, nextStatus);
-  if (!success) return;
+  try {
+    await updateOrderStatus(orderId, nextStatus);
 
-  const order = getOrders().find((o) => o.orderId === orderId);
-  const isPositive = [ORDER_STATUSES.COMPLETED, ORDER_STATUSES.READY].includes(nextStatus);
-  const isCancel = nextStatus === ORDER_STATUSES.CANCELLED;
+    showToast(
+      `Order #${orderId} → ${nextStatus}`,
+      "success"
+    );
 
-  showToast(
-    `Token ${order?.tokenNumber ?? ""} → ${nextStatus}`,
-    isCancel ? "error" : isPositive ? "success" : "info"
-  );
+    await renderAll();
 
-  renderAll();
+  } catch (error) {
+    showToast(error.message, "error");
+  }
 }
 
-/* ==========================================================
-   Print jobs table
-========================================================== */
+// ---------------------------------------------------------------------------
+// Print jobs table
+// Extract items with itemType === "print" across all orders.
+// item shape from backend: { itemType, fileName, pages, copies, colorMode, paperSize, sided }
+// ---------------------------------------------------------------------------
 
-function renderPrintTable() {
-  const jobs = getPrintJobs().slice(0, 10);
+function renderPrintTable(orders) {
+  const printJobs = orders.flatMap((order) =>
+    (order.items ?? [])
+      .filter((item) => item.itemType === "print")
+      .map((item) => ({
+        ...item,
+        orderId:     order.id,
+        tokenNumber: order.tokenNumber,
+        studentName: order.studentName,
+        orderStatus: order.status,
+      }))
+  );
 
-  if (jobs.length === 0) {
+  if (printJobs.length === 0) {
     printTableBody.innerHTML = `
       <tr class="table-empty">
         <td colspan="7">No print jobs yet.</td>
@@ -195,50 +234,49 @@ function renderPrintTable() {
     return;
   }
 
-  printTableBody.replaceChildren(...jobs.map(buildPrintRow));
+  printTableBody.replaceChildren(
+    ...printJobs.slice(0, 10).map(buildPrintRow)
+  );
 }
 
 function buildPrintRow(job) {
   const tr = document.createElement("tr");
-  tr.dataset.jobId = job.jobId;
 
-  const isDone = job.status === PRINT_JOB_STATUSES.COMPLETED;
   const colorLabel = job.colorMode === "COLOR" ? "Color" : "B/W";
-  const sidedLabel = job.sided === "DOUBLE" ? "2-sided" : "1-sided";
+  const sidedLabel = job.sided === "DOUBLE"     ? "2-sided" : "1-sided";
+  const isDone     = job.orderStatus === "COMPLETED";
+
+  const fileName    = job.fileName ?? job.productName ?? "document";
+  const displayName = fileName.length > 24 ? fileName.slice(0, 21) + "…" : fileName;
 
   tr.innerHTML = `
     <td class="table-cell">
-      <span class="admin-token">${job.tokenNumber}</span>
+      <span class="admin-token">#${job.tokenNumber}</span>
     </td>
     <td class="table-cell">
       <div class="table-student">
-        <span class="table-student-name">${job.studentName}</span>
-        <span class="table-student-roll">${job.rollNumber}</span>
+        <span class="table-student-name">${job.studentName ?? "—"}</span>
       </div>
     </td>
-    <td class="table-cell table-filename" title="${job.fileName}">
-      ${job.fileName.length > 24 ? job.fileName.slice(0, 21) + "…" : job.fileName}
+    <td class="table-cell table-filename" title="${fileName}">
+      ${displayName}
     </td>
     <td class="table-cell">
-      ${job.pages} pg × ${job.copies}
+      ${job.pages ?? "—"} pg × ${job.copies ?? job.quantity ?? 1}
     </td>
     <td class="table-cell">
-      ${colorLabel} · ${sidedLabel} · ${job.paperSize}
+      ${colorLabel} · ${sidedLabel} · ${job.paperSize ?? "A4"}
     </td>
     <td class="table-cell">
-      <span class="badge ${printBadgeClass(job.status)}">${job.status}</span>
+      <span class="badge ${isDone ? "badge-completed" : "badge-preparing"}">
+        ${isDone ? "Completed" : "Pending"}
+      </span>
     </td>
     <td class="table-cell table-actions">
       ${isDone
         ? `<span class="action-done">Done</span>`
-        : `<div class="action-btn-group">
-             ${job.status === PRINT_JOB_STATUSES.PENDING
-               ? `<button class="btn btn-sm btn-secondary print-action-btn" data-next="${PRINT_JOB_STATUSES.PRINTING}">Start Printing</button>`
-               : ""}
-             ${job.status === PRINT_JOB_STATUSES.PRINTING
-               ? `<button class="btn btn-sm btn-primary print-action-btn" data-next="${PRINT_JOB_STATUSES.COMPLETED}">Mark Completed</button>`
-               : ""}
-           </div>`
+        : `<button class="btn btn-sm btn-primary print-action-btn"
+             data-order-id="${job.orderId}">Mark Done</button>`
       }
     </td>
   `;
@@ -246,52 +284,81 @@ function buildPrintRow(job) {
   return tr;
 }
 
-function handlePrintAction(event) {
+// TODO: when PATCH /api/orders/{id}/status is added, call it here.
+async function handlePrintAction(event) {
   const btn = event.target.closest(".print-action-btn");
   if (!btn) return;
 
-  const row = btn.closest("tr");
-  const jobId = row.dataset.jobId;
-  const nextStatus = btn.dataset.next;
+  const orderId = Number(btn.dataset.orderId);
 
-  updatePrintJobStatus(jobId, nextStatus);
+  try {
+    await updateOrderStatus(orderId, "COMPLETED");
 
-  const job = getPrintJobs().find((j) => j.jobId === jobId);
-  const isDone = nextStatus === PRINT_JOB_STATUSES.COMPLETED;
+    showToast(
+      "Print job completed",
+      "success"
+    );
 
-  showToast(
-    `Print job (${job?.fileName?.slice(0, 20) ?? jobId}) → ${nextStatus}`,
-    isDone ? "success" : "info"
-  );
+    await renderAll();
 
-  renderAll();
+  } catch (error) {
+    showToast(error.message, "error");
+  }
 }
 
-/* ==========================================================
-   Helpers
-========================================================== */
+// ---------------------------------------------------------------------------
+// Loading / error states
+// ---------------------------------------------------------------------------
+
+function setTablesLoading() {
+  ordersTableBody.innerHTML = `
+    <tr class="table-empty"><td colspan="7">Loading orders…</td></tr>`;
+  printTableBody.innerHTML = `
+    <tr class="table-empty"><td colspan="7">Loading print jobs…</td></tr>`;
+}
+
+function setTablesError() {
+  ordersTableBody.innerHTML = `
+    <tr class="table-empty">
+      <td colspan="7">Failed to load orders. Check server connection.</td>
+    </tr>`;
+  printTableBody.innerHTML = `
+    <tr class="table-empty">
+      <td colspan="7">Failed to load print jobs.</td>
+    </tr>`;
+}
+
+// ---------------------------------------------------------------------------
+// Auto-refresh every 30 seconds
+// ---------------------------------------------------------------------------
+
+function startAutoRefresh() {
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(renderAll, 30_000);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatCurrency(amount) {
+  return `₹${Number(amount ?? 0).toLocaleString("en-IN")}`;
+}
+
+function formatTime(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("en-IN", {
+    hour:   "numeric",
+    minute: "2-digit",
+  });
+}
 
 function statusBadgeClass(status) {
   return {
-    [ORDER_STATUSES.PLACED]: "badge-placed",
-    [ORDER_STATUSES.PREPARING]: "badge-preparing",
-    [ORDER_STATUSES.READY]: "badge-ready",
-    [ORDER_STATUSES.COMPLETED]: "badge-completed",
-    [ORDER_STATUSES.CANCELLED]: "badge-cancelled",
-  }[status] || "badge-placed";
-}
-
-function printBadgeClass(status) {
-  return {
-    [PRINT_JOB_STATUSES.PENDING]: "badge-placed",
-    [PRINT_JOB_STATUSES.PRINTING]: "badge-preparing",
-    [PRINT_JOB_STATUSES.COMPLETED]: "badge-completed",
-  }[status] || "badge-placed";
-}
-
-function startAutoRefresh() {
-  // Refresh stats every 30 s to reflect changes made from another tab/device.
-  refreshInterval = setInterval(() => {
-    renderStats();
-  }, 30000);
+    PLACED:    "badge-placed",
+    PREPARING: "badge-preparing",
+    READY:     "badge-ready",
+    COMPLETED: "badge-completed",
+    CANCELLED: "badge-cancelled",
+  }[status] ?? "badge-placed";
 }

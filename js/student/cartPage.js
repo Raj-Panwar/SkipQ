@@ -1,11 +1,11 @@
 // js/student/cartPage.js
-import { getCart, setQuantity, removeFromCart, clearCart, recordCompletedOrder } from "./cartStore.js";
-import { decrementStockForOrder } from "../admin/inventoryStore.js";
+import { getCart, setQuantity, removeFromCart, clearCart } from "./cartStore.js";
+
 import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
-
+import { createOrder } from "./orderApi.js";
 const cartItemsList    = document.getElementById("cartItemsList");
 const emptyCartState   = document.getElementById("emptyCartState");
 const orderSummaryCard = document.getElementById("orderSummaryCard");
@@ -156,38 +156,61 @@ function updateSummary(items) {
  * the stock reduction is visible immediately on menu.html on next render
  * and on admin/inventory.html on next render — no extra sync step needed.
  */
-function handleCheckout() {
+async function handleCheckout() {
   const items = getCart();
+
   if (items.length === 0) return;
 
+  
+  const payload = {
+  studentName: "Raj",
+  items: items.map((item) => {
+
+    if (item.itemType === "print") {
+      return {
+        itemType: "print",
+        fileName: item.fileName,
+        pages: item.pages,
+        copies: item.copies,
+        colorMode: item.colorMode,
+        sided: item.sided,
+        paperSize: item.paperSize,
+        totalPrice: item.totalPrice
+      };
+    }
+
+    return {
+      itemType: "stationery",
+      productId: item.productId,
+      quantity: item.quantity
+    };
+  })
+};
   checkoutBtn.disabled = true;
   checkoutBtn.classList.add("is-loading");
 
-  setTimeout(() => {
-    const totalAmount = items.reduce(
-      (s, i) => s + (i.itemType === "print" ? i.totalPrice : i.price * i.quantity), 0
-    );
-    const orderItems = items.map((i) =>
-      i.itemType === "print"
-        ? { name: i.fileName, quantity: i.copies, price: i.totalPrice / i.copies }
-        : { name: i.name, quantity: i.quantity, price: i.price }
-    );
-    const simulatedOrder = {
-      orderId: Math.floor(Math.random() * 900) + 100,
-      tokenNumber: `#0${Math.floor(Math.random() * 40) + 50}`,
-      items: orderItems,
-      totalAmount,
-      placedAt: new Date().toISOString(),
-    };
+  try {
+    console.log("Payload Sent:", payload);
+    const order = await createOrder(payload);
 
-    // NEW: reduce stock for every stationery item before finalizing.
-    decrementStockForOrder(items);
+    sessionStorage.setItem(
+      "skipq_latest_order",
+      JSON.stringify(order)
+    );
+    console.log("Saved Order:", order);
 
-    sessionStorage.setItem("skipq_latest_order", JSON.stringify(simulatedOrder));
-    recordCompletedOrder(simulatedOrder);
     clearCart();
 
-    showToast(`Order placed! Your token is ${simulatedOrder.tokenNumber}`, "success", 4000);
-    setTimeout(() => { window.location.href = "./token.html"; }, 800);
-  }, 600);
+    showToast("Order placed successfully!", "success");
+
+    setTimeout(() => {
+      window.location.href = "./token.html";
+    }, 800);
+
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.classList.remove("is-loading");
+  }
 }

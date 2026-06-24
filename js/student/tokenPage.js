@@ -2,7 +2,7 @@
 import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
-
+import { getOrderById } from "./orderApi.js";
 const myTokenNumberEl   = document.getElementById("myTokenNumber");
 const statusBadge       = document.getElementById("statusBadge");
 const nowServingNumberEl = document.getElementById("nowServingNumber");
@@ -21,12 +21,16 @@ if (!DEV_MODE && !isAuthenticated()) {
 initStudentNav("token");
 
 const order = loadOrder();
+console.log(
+  "Loaded Order:",
+  JSON.parse(sessionStorage.getItem("skipq_latest_order"))
+);
 let myTokenValue    = parseTokenNumber(order.tokenNumber);
 let nowServingValue = Math.max(1, myTokenValue - 6);
 
 renderOrderSummary(order);
 renderQueueState();
-startSimulation();
+//startSimulation();
 
 function loadOrder() {
   const raw = sessionStorage.getItem("skipq_latest_order");
@@ -59,7 +63,7 @@ function renderOrderSummary(order) {
       const li = document.createElement("li");
       li.className = "order-summary-item";
       li.innerHTML = `
-        <span>${item.quantity} × ${item.name}</span>
+        <span>${item.quantity} × ${item.productName}</span>
         <span>${formatCurrency(item.price * item.quantity)}</span>
       `;
       return li;
@@ -81,21 +85,57 @@ function renderQueueState() {
     : Math.min(95, Math.round((1 - queuePosition / (queuePosition + 4)) * 100));
   progressFill.style.width = `${progressPercent}%`;
 
-  updateStatusBadge(queuePosition);
+  updateStatusBadge(order.status);
   rebuildTimeline(queuePosition);
 }
+setInterval(async () => {
+  try {
 
-function updateStatusBadge(queuePosition) {
-  statusBadge.classList.remove("badge-placed", "badge-preparing", "badge-ready");
-  if (queuePosition === 0) {
-    statusBadge.textContent = "Ready for pickup";
-    statusBadge.classList.add("badge-ready");
-  } else if (queuePosition <= 2) {
-    statusBadge.textContent = "Almost ready";
-    statusBadge.classList.add("badge-preparing");
-  } else {
-    statusBadge.textContent = "Preparing";
-    statusBadge.classList.add("badge-preparing");
+    const latestOrder = await getOrderById(order.id);
+
+    order.status = latestOrder.status;
+
+    updateStatusBadge(order.status);
+
+  } catch (err) {
+    console.error(err);
+  }
+
+}, 10000);
+
+function updateStatusBadge(status) {
+
+  statusBadge.classList.remove(
+    "badge-placed",
+    "badge-preparing",
+    "badge-ready",
+    "badge-completed"
+  );
+
+  switch (status) {
+
+    case "PLACED":
+      statusBadge.textContent = "Order Received";
+      statusBadge.classList.add("badge-placed");
+      break;
+
+    case "PREPARING":
+      statusBadge.textContent = "Preparing";
+      statusBadge.classList.add("badge-preparing");
+      break;
+
+    case "READY":
+      statusBadge.textContent = "Ready For Pickup";
+      statusBadge.classList.add("badge-ready");
+      break;
+
+    case "COMPLETED":
+      statusBadge.textContent = "Collected";
+      statusBadge.classList.add("badge-completed");
+      break;
+
+    default:
+      statusBadge.textContent = order.status;
   }
 }
 
@@ -128,7 +168,7 @@ function rebuildTimeline(queuePosition) {
   });
 }
 
-function startSimulation() {
+/*function startSimulation() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const interval = setInterval(() => {
@@ -139,4 +179,4 @@ function startSimulation() {
     nowServingValue += 1;
     renderQueueState();
   }, 3500);
-}
+}*/

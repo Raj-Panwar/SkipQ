@@ -60,7 +60,7 @@ async function init() {
   categoryTabs.addEventListener("click", handleCategoryClick);
   productGrid.addEventListener("click", handleGridClick);
 
-  window.addEventListener("focus", refreshProducts);
+ // window.addEventListener("focus", refreshProducts);
 }
 
 async function refreshProducts() {
@@ -192,6 +192,7 @@ function getFilteredProducts() {
 }
 
 function renderProducts() {
+  console.trace("RENDER PRODUCTS");
   const filtered = getFilteredProducts();
 
   if (filtered.length === 0) {
