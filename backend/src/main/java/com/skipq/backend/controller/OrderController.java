@@ -1,6 +1,7 @@
 package com.skipq.backend.controller;
 
 import com.skipq.backend.dto.CreateOrderRequest;
+import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.service.OrderService;
 
@@ -22,15 +23,16 @@ public class OrderController {
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
+
     @PatchMapping("/{id}/status")
-public ResponseEntity<Order> updateStatus(
-        @PathVariable Long id,
-        @RequestParam String status) {
+    public ResponseEntity<Order> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
 
-    Order updatedOrder = orderService.updateStatus(id, status);
+        Order updatedOrder = orderService.updateStatus(id, status);
 
-    return ResponseEntity.ok(updatedOrder);
-}
+        return ResponseEntity.ok(updatedOrder);
+    }
 
     @PostMapping
     public ResponseEntity<Order> createOrder(
@@ -48,5 +50,10 @@ public ResponseEntity<Order> updateStatus(
     @GetMapping("/{id}")
     public Order getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
+    }
+
+    @GetMapping("/{id}/queue")
+    public QueueInfoDTO getQueueInfo(@PathVariable Long id) {
+        return orderService.getQueueInfo(id);
     }
 }
