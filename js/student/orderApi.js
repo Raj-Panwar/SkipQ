@@ -50,3 +50,14 @@ export async function getOrderById(id) {
 
   return response.json();
 }
+export async function getQueueInfo(id) {
+
+  const response = await fetch(
+      `http://localhost:8080/api/orders/${id}/queue`
+  );
+
+  if (!response.ok)
+      throw new Error("Failed to load queue");
+
+  return response.json();
+}

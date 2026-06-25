@@ -2,7 +2,7 @@
 import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
-import { getOrderById } from "./orderApi.js";
+import { getOrderById, getQueueInfo } from "./orderApi.js";
 const myTokenNumberEl   = document.getElementById("myTokenNumber");
 const statusBadge       = document.getElementById("statusBadge");
 const nowServingNumberEl = document.getElementById("nowServingNumber");
@@ -26,11 +26,13 @@ console.log(
   JSON.parse(sessionStorage.getItem("skipq_latest_order"))
 );
 let myTokenValue    = parseTokenNumber(order.tokenNumber);
-let nowServingValue = Math.max(1, myTokenValue - 6);
+let nowServingValue = myTokenValue;
 
 renderOrderSummary(order);
-renderQueueState();
-//startSimulation();
+
+loadQueue();
+
+
 
 function loadOrder() {
   const raw = sessionStorage.getItem("skipq_latest_order");
@@ -73,35 +75,49 @@ function renderOrderSummary(order) {
   orderTotalEl.textContent = formatCurrency(order.totalAmount);
 }
 
-function renderQueueState() {
-  const queuePosition = Math.max(0, myTokenValue - nowServingValue);
+function renderQueueState(queue) {
 
-  nowServingNumberEl.textContent = formatToken(nowServingValue);
-  queuePositionEl.textContent = String(queuePosition);
-  waitEstimateEl.textContent = `${queuePosition * 3} min`;
+    nowServingNumberEl.textContent = formatToken(queue.currentServing);
 
-  const progressPercent = queuePosition === 0
-    ? 100
-    : Math.min(95, Math.round((1 - queuePosition / (queuePosition + 4)) * 100));
-  progressFill.style.width = `${progressPercent}%`;
+    queuePositionEl.textContent = queue.peopleAhead;
 
-  updateStatusBadge(order.status);
-  rebuildTimeline(queuePosition);
+    waitEstimateEl.textContent =
+        queue.estimatedWait + " min";
+
+    const progressPercent =
+        queue.peopleAhead === 0
+            ? 100
+            : Math.min(
+                95,
+                Math.round(
+                    (1 - queue.peopleAhead / (queue.peopleAhead + 4)) * 100
+                )
+            );
+
+    progressFill.style.width = progressPercent + "%";
+
+    updateStatusBadge(queue.status);
+
+    rebuildTimeline(queue.peopleAhead);
 }
-setInterval(async () => {
-  try {
+async function loadQueue() {
+    try {
 
-    const latestOrder = await getOrderById(order.id);
+        const queue = await getQueueInfo(order.id);
 
-    order.status = latestOrder.status;
+        myTokenValue = queue.tokenNumber;
+        nowServingValue = queue.currentServing;
 
-    updateStatusBadge(order.status);
+        renderQueueState(queue);
 
-  } catch (err) {
-    console.error(err);
-  }
+    } catch (err) {
+        console.error(err);
+    }
+}
 
-}, 10000);
+loadQueue();
+
+setInterval(loadQueue, 5000);
 
 function updateStatusBadge(status) {
 
