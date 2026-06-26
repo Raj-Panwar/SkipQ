@@ -34,5 +34,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             FROM Order o
             """)
     Integer findMaxTokenNumber();
+    List<Order> findByStudentIdOrderByCreatedAtDesc(Long studentId);
 
 }

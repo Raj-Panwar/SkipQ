@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public class CreateOrderRequest {
+    private Long studentId;
 
     @NotBlank(message = "Student name is required")
     private String studentName;
@@ -14,11 +15,30 @@ public class CreateOrderRequest {
     @Valid
     private List<CreateOrderItemRequest> items;
 
-    public CreateOrderRequest() {}
+    public CreateOrderRequest() {
+    }
 
-    public String getStudentName() { return studentName; }
-    public void setStudentName(String studentName) { this.studentName = studentName; }
+    public Long getStudentId() {
+        return studentId;
+    }
 
-    public List<CreateOrderItemRequest> getItems() { return items; }
-    public void setItems(List<CreateOrderItemRequest> items) { this.items = items; }
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
+    }
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public List<CreateOrderItemRequest> getItems() {
+        return items;
+    }
+
+    public void setItems(List<CreateOrderItemRequest> items) {
+        this.items = items;
+    }
 }

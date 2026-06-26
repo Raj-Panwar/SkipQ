@@ -1,5 +1,7 @@
 package com.skipq.backend.service;
 
+import com.skipq.backend.entity.Student;
+import com.skipq.backend.repository.StudentRepository;
 import com.skipq.backend.dto.CreateOrderItemRequest;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
@@ -19,12 +21,16 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final StudentRepository studentRepository;
 
     public OrderService(OrderRepository orderRepository,
-            ProductRepository productRepository) {
-        this.orderRepository = orderRepository;
-        this.productRepository = productRepository;
-    }
+        ProductRepository productRepository,
+        StudentRepository studentRepository) {
+
+    this.orderRepository = orderRepository;
+    this.productRepository = productRepository;
+    this.studentRepository = studentRepository;
+}
 
     @Transactional
     public Order updateStatus(Long id, String status) {
@@ -41,8 +47,27 @@ public class OrderService {
     public Order createOrder(CreateOrderRequest request) {
 
         Order order = new Order();
-        order.setStudentName(request.getStudentName());
-        order.setStatus("PLACED");
+
+if (request.getStudentId() != null) {
+
+    Student student = studentRepository.findById(request.getStudentId())
+            .orElseThrow(() ->
+                    new RuntimeException("Student not found"));
+
+    order.setStudent(student);
+
+    order.setStudentName(student.getFullName());
+
+} else {
+
+    order.setStudentName(
+            request.getStudentName() != null
+                    ? request.getStudentName()
+                    : "Guest"
+    );
+}
+
+order.setStatus("PLACED");
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
