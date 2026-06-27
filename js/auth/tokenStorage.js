@@ -34,5 +34,5 @@ export function clearSession() {
 
 /** @returns {boolean} true if a token is present */
 export function isAuthenticated() {
-  return Boolean(getToken());
+  return Boolean(getUser());
 }

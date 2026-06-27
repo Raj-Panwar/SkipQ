@@ -20,14 +20,16 @@ public class SecurityConfig {
      * POST / PUT / PATCH / DELETE requests without additional token handling.
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-            );
-        return http.build();
-    }
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+    http
+        .cors(cors -> {})
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll());
+
+    return http.build();
+}
 
     /**
      * BCryptPasswordEncoder bean — injected into StudentService for
@@ -39,4 +41,24 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    @Bean
+public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+
+    org.springframework.web.cors.CorsConfiguration configuration =
+            new org.springframework.web.cors.CorsConfiguration();
+
+    configuration.addAllowedOrigin("http://127.0.0.1:5500");
+    configuration.addAllowedOrigin("http://localhost:5500");
+
+    configuration.addAllowedHeader("*");
+    configuration.addAllowedMethod("*");
+    configuration.setAllowCredentials(false);
+
+    org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
+            new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+
+    source.registerCorsConfiguration("/**", configuration);
+
+    return source;
+}
 }

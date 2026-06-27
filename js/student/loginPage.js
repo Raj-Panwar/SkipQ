@@ -4,9 +4,8 @@
 // redirects to the menu on success, and runs the decorative
 // "now serving" token simulation in the hero card.
 
-import { login } from "../api/authApi.js";
-import { ApiError } from "../api/apiClient.js";
-import { setToken, setUser, isAuthenticated } from "../auth/tokenStorage.js";
+import { loginStudent } from "../api/studentApi.js";
+import { setSession, isLoggedIn } from "../shared/auth.js";
 import { isValidEmail, isValidPassword } from "../utils/validators.js";
 
 const form = document.getElementById("loginForm");
@@ -19,7 +18,7 @@ const submitBtn = document.getElementById("submitBtn");
 const togglePasswordBtn = document.getElementById("togglePassword");
 
 // If the student is already logged in, skip straight to the menu.
-if (isAuthenticated()) {
+if (isLoggedIn()) {
   window.location.href = "./menu.html";
 }
 
@@ -47,20 +46,16 @@ form.addEventListener("submit", async (event) => {
 
   try {
     console.log("Login button clicked");
-    const response = await login({ email, password });
-    console.log("Login response:", response);
-    setToken(response.token);
-    setUser(response.user);
-    console.log("Redirecting to menu...");
-    window.location.href = "./menu.html";
+    const student = await loginStudent({
+    email,
+    password
+});
+
+setSession(student);
+
+window.location.href = "./menu.html";
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      showAlert("Incorrect email or password. Please try again.");
-    } else if (error instanceof ApiError && error.status === 0) {
-      showAlert("Unable to reach the server. Check your connection and try again.");
-    } else {
-      showAlert(error.message || "Login failed. Please try again.");
-    }
+   showAlert(error.message || "Login failed. Please try again.");
   } finally {
     setLoading(false);
   }

@@ -2,7 +2,7 @@
 
 import { getMenuProducts } from "./menuApi.js";
 import { addToCart, addPrintJob, getCartCount, getCartTotal } from "./cartStore.js";
-import { getUser, isAuthenticated } from "../auth/tokenStorage.js";
+import { getSession, isLoggedIn } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
@@ -20,8 +20,7 @@ const cartSummaryBar   = document.getElementById("cartSummaryBar");
 const cartSummaryCount = document.getElementById("cartSummaryCount");
 const cartSummaryTotal = document.getElementById("cartSummaryTotal");
 
-const DEV_MODE = true;
-if (!DEV_MODE && !isAuthenticated()) {
+if (!isLoggedIn()) {
   window.location.href = "./login.html";
 }
 
@@ -35,10 +34,12 @@ init();
 async function init() {
   initStudentNav("menu");
 
-  const user = getUser();
-  if (user?.name) {
-    welcomeGreeting.textContent = `Welcome back, ${firstName(user.name)}`;
-  }
+  const user = getSession();
+
+if (user?.fullName) {
+    welcomeGreeting.textContent =
+        `Welcome back, ${firstName(user.fullName)}`;
+}
 
   updateCartUI();
   setGridLoading(true);
@@ -60,7 +61,11 @@ async function init() {
   categoryTabs.addEventListener("click", handleCategoryClick);
   productGrid.addEventListener("click", handleGridClick);
 
- // window.addEventListener("focus", refreshProducts);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        refreshProducts();
+    }
+});
 }
 
 async function refreshProducts() {
