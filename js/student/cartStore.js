@@ -10,19 +10,32 @@
 // of a product than are actually available — even if a quantity request
 // arrives from somewhere other than the menu page's own UI guard.
 
-import { getProductById } from "../admin/inventoryStore.js";
+import { getProductById } from "./menuApi.js";
+import { getSession } from "../shared/auth.js";
 
-const CART_KEY = "skipq_cart";
-const HISTORY_KEY = "skipq_order_history";
+function getCartKey() {
+    const student = getSession();
+
+    return student
+        ? `skipq_cart_${student.id}`
+        : "skipq_cart_guest";
+}
+function getHistoryKey() {
+    const student = getSession();
+
+    return student
+        ? `skipq_order_history_${student.id}`
+        : "skipq_order_history_guest";
+}
 
 /** @returns {Array} */
 export function getCart() {
-  const raw = localStorage.getItem(CART_KEY);
+  const raw = localStorage.getItem(getCartKey());
   return raw ? JSON.parse(raw) : [];
 }
 
 function saveCart(items) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  localStorage.setItem(getCartKey(), JSON.stringify(items));
 }
 
 /* ==========================================================
@@ -39,10 +52,11 @@ function saveCart(items) {
  * @param {number} [quantity=1]
  * @returns {Array} the updated cart
  */
-export function addToCart(product, quantity = 1) {
+export async function addToCart(product, quantity = 1) {
   const items = getCart();
-  const liveProduct = getProductById(product.id);
+  const liveProduct = await getProductById(product.id);
   const availableStock = liveProduct ? liveProduct.stock : Infinity;
+  console.log(liveProduct);
 
   const existing = items.find(
     (item) => item.itemType === "stationery" && item.productId === product.id
@@ -99,29 +113,77 @@ export function addPrintJob(printJob) {
  * @param {string} cartItemId
  * @param {number} quantity
  */
-export function setQuantity(cartItemId, quantity) {
-  let items = getCart();
-  const existing = items.find((item) => item.cartItemId === cartItemId);
+export async function setQuantity(cartItemId, quantity) {
+  
 
-  if (!existing || existing.itemType !== "stationery") {
+    let items = getCart();
+
+    const existing = items.find(
+        item => item.cartItemId === cartItemId
+    );
+
+    if (!existing || existing.itemType !== "stationery") {
+        saveCart(items);
+        return items;
+    }
+
+    const liveProduct = await getProductById(existing.productId);
+
+    const availableStock = liveProduct
+        ? liveProduct.stock
+        : Infinity;
+        console.log({
+    currentQty: existing.quantity,
+    requestedQty: quantity,
+    availableStock
+  });
+
+    const clamped = Math.min(
+        availableStock,
+        Math.max(0, quantity)
+    );
+
+    if (clamped <= 0) {
+        items = items.filter(
+            item => item.cartItemId !== cartItemId
+        );
+    } else {
+        existing.quantity = clamped;
+    }
+
     saveCart(items);
     return items;
-  }
-
-  const liveProduct = getProductById(existing.productId);
-  const availableStock = liveProduct ? liveProduct.stock : Infinity;
-  const clamped = Math.min(availableStock, Math.max(0, quantity));
-
-  if (clamped <= 0) {
-    items = items.filter((item) => item.cartItemId !== cartItemId);
-  } else {
-    existing.quantity = clamped;
-  }
-
-  saveCart(items);
-  return items;
 }
 
+
+/**==============================PRINT ADD COPIES================ */
+export function setPrintCopies(cartItemId, copies) {
+
+    const items = getCart();
+
+    const item = items.find(
+        i => i.cartItemId === cartItemId &&
+             i.itemType === "print"
+    );
+
+    if (!item) return items;
+
+    item.copies = Math.max(1, copies);
+
+    const rate =
+        item.colorMode === "COLOR"
+            ? 10
+            : 2;
+
+    item.totalPrice =
+        item.pages *
+        item.copies *
+        rate;
+
+    saveCart(items);
+
+    return items;
+}
 /* ==========================================================
    Remove Item
 ========================================================== */
@@ -162,7 +224,7 @@ export function getCartTotal() {
 
 /** @returns {Array} */
 export function getOrderHistory() {
-  const raw = localStorage.getItem(HISTORY_KEY);
+  const raw = localStorage.getItem(getHistoryKey());
   return raw ? JSON.parse(raw) : [];
 }
 
@@ -172,6 +234,6 @@ export function getOrderHistory() {
 export function recordCompletedOrder(order) {
   const history = getOrderHistory();
   history.unshift({ status: "Completed", ...order });
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  localStorage.setItem(getHistoryKey(), JSON.stringify(history));
   return history;
 }

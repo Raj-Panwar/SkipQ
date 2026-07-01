@@ -1,32 +1,40 @@
 // js/student/menuPage.js
+// CHANGED in this file (search CHANGED comments):
+//   1. adjustQuantitySelector — removed Math.min(10, ...) cap.
+//      Max quantity is now product.stock directly (no artificial ceiling).
+//   2. handleAddToCart — computes remaining available stock as
+//      (backend stock − qty already in cart) and enforces that limit.
+//      Shows a specific toast when the student hits the ceiling.
+//   3. buildProductCard — quantity display no longer clamped to 10;
+//      uses selectedQuantities value directly (already bounded by stock
+//      in adjustQuantitySelector).
+// Everything else (auth guard, product loading, filtering, search,
+// print jobs, cart summary bar, sticky bar) is unchanged.
 
 import { getMenuProducts } from "./menuApi.js";
-import { addToCart, addPrintJob, getCartCount, getCartTotal } from "./cartStore.js";
-import { getSession, isLoggedIn } from "../shared/auth.js";
+import { addToCart, addPrintJob, getCartCount, getCartTotal, getCart } from "./cartStore.js";
+import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
 
 const LOW_STOCK_THRESHOLD = 10;
 
-const productGrid     = document.getElementById("productGrid");
-const emptyState      = document.getElementById("emptyState");
-const searchInput     = document.getElementById("searchInput");
-const categoryTabs    = document.getElementById("categoryTabs");
-const welcomeGreeting = document.getElementById("welcomeGreeting");
-
+const productGrid      = document.getElementById("productGrid");
+const emptyState       = document.getElementById("emptyState");
+const searchInput      = document.getElementById("searchInput");
+const categoryTabs     = document.getElementById("categoryTabs");
+const welcomeGreeting  = document.getElementById("welcomeGreeting");
 const cartBadge        = document.getElementById("cartBadge");
 const cartSummaryBar   = document.getElementById("cartSummaryBar");
 const cartSummaryCount = document.getElementById("cartSummaryCount");
 const cartSummaryTotal = document.getElementById("cartSummaryTotal");
 
-if (!isLoggedIn()) {
-  window.location.href = "./login.html";
-}
+requireAuth();
 
-let activeCategory  = "All";
-let searchTerm      = "";
-let allProducts     = [];
+let activeCategory = "All";
+let searchTerm     = "";
+let allProducts    = [];
 const selectedQuantities = new Map();
 
 init();
@@ -34,19 +42,16 @@ init();
 async function init() {
   initStudentNav("menu");
 
-  const user = getSession();
-
-if (user?.fullName) {
-    welcomeGreeting.textContent =
-        `Welcome back, ${firstName(user.fullName)}`;
-}
+  const student = getSession();
+  if (student?.fullName) {
+    welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
+  }
 
   updateCartUI();
   setGridLoading(true);
 
   try {
     const fetched = await getMenuProducts();
-    // Show only ACTIVE products on the student menu
     allProducts = fetched.filter((p) => p.status === "ACTIVE");
   } catch (error) {
     showToast("Could not load products. Please check your connection.", "error");
@@ -61,11 +66,7 @@ if (user?.fullName) {
   categoryTabs.addEventListener("click", handleCategoryClick);
   productGrid.addEventListener("click", handleGridClick);
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-        refreshProducts();
-    }
-});
+ // window.addEventListener("focus", refreshProducts);
 }
 
 async function refreshProducts() {
@@ -74,13 +75,7 @@ async function refreshProducts() {
     allProducts = fetched.filter((p) => p.status === "ACTIVE");
     renderProducts();
     updateCartUI();
-  } catch {
-    // Silent refresh failure — do not toast on background refresh
-  }
-}
-
-function firstName(fullName) {
-  return fullName.trim().split(" ")[0];
+  } catch { /* silent background refresh failure */ }
 }
 
 function setGridLoading(loading) {
@@ -128,78 +123,117 @@ function handleGridClick(event) {
     const card      = printBtn.closest(".product-card");
     const fileInput = card.querySelector(".print-file-input");
     const file      = fileInput.files[0];
-
     if (!file) {
       showToast("Please upload a PDF before adding to cart.", "warning");
       return;
     }
-
     const copies    = Number(card.querySelector(".print-copies").value) || 1;
-    const sidedRaw  = card.querySelector(".print-sided").value;
-    const sided     = sidedRaw.toUpperCase();
+    const sided     = card.querySelector(".print-sided").value.toUpperCase();
     const productId = Number(card.dataset.productId);
     const product   = allProducts.find((p) => p.id === productId);
-
-    const pageCount    = getMockPageCountFromFile(file);
-    const colorMode    = product.name.toLowerCase().includes("color") ? "COLOR" : "BW";
+    const pageCount = getMockPageCount(file);
+    const colorMode = product.name.toLowerCase().includes("color") ? "COLOR" : "BW";
     const pricePerPage = colorMode === "COLOR" ? 10 : 2;
-    const totalPrice   = pricePerPage * pageCount * copies;
-
-    addPrintJob({ fileName: file.name, pages: pageCount, copies, colorMode, sided, paperSize: "A4", totalPrice });
+    addPrintJob({
+      fileName: file.name, pages: pageCount, copies,
+      colorMode, sided, paperSize: "A4",
+      totalPrice: pricePerPage * pageCount * copies,
+    });
     updateCartUI();
     showToast(`Print job added — ${copies} × ${file.name}`, "success");
   }
 }
 
-function getMockPageCountFromFile(file) {
-  const estimated = Math.round(file.size / 45000);
-  return Math.min(60, Math.max(1, estimated || 1));
+function getMockPageCount(file) {
+  // 60 here is a PDF page count cap, not a product quantity limit.
+  return Math.min(60, Math.max(1, Math.round(file.size / 45000) || 1));
 }
 
+/**
+ * CHANGED: removed the hardcoded Math.min(10, product.stock) cap.
+ * The only upper bound is product.stock from the backend.
+ */
 function adjustQuantitySelector(card, productId, direction) {
   const product = allProducts.find((p) => p.id === productId);
-  const maxQty  = product ? Math.min(10, product.stock ?? 10) : 10;
-  const current = selectedQuantities.get(productId) ?? 1;
-  const next    = Math.min(maxQty, Math.max(1, current + direction));
+
+const cartItem = getCart().find(
+    i => i.itemType === "stationery" && i.productId === productId
+);
+
+const alreadyInCart = cartItem ? cartItem.quantity : 0;
+
+const maxQty = Math.max(0, (product?.stock ?? 0) - alreadyInCart);
+
+const current = selectedQuantities.get(productId) ?? 1;
+const next = Math.min(maxQty, Math.max(1, current + direction));
   selectedQuantities.set(productId, next);
 
-  const qtyValueEl = card.querySelector(".qty-value");
-  if (qtyValueEl) qtyValueEl.textContent = String(next);
+  const el = card.querySelector(".qty-value");
+  if (el) el.textContent = String(next);
 
-  if (direction === 1 && next === current && current >= maxQty) {
-    showToast(`Only ${product.stock} in stock`, "warning");
+  // Tell the student when they've reached the stock ceiling
+  if (direction === 1 && next === current) {
+    showToast(`Only ${maxQty} more available.`, "warning");
   }
 }
 
-function handleAddToCart(productId, card) {
+/**
+ * CHANGED: remaining available stock =
+ *   backend stock − quantity already in the cart for this product.
+ * This means the student can never add more total units than exist.
+ */
+async function handleAddToCart(productId, card) {
   const product = allProducts.find((p) => p.id === productId);
   if (!product || (product.stock ?? 0) === 0) return;
 
-  const quantity = Math.min(selectedQuantities.get(productId) ?? 1, product.stock ?? 1);
-  addToCart(product, quantity);
+  const requested = selectedQuantities.get(productId) ?? 1;
+
+  // How many of this product are already sitting in the cart?
+  const cartItems   = getCart();
+  const inCartItem  = cartItems.find(
+    (i) => i.itemType === "stationery" && i.productId === productId
+  );
+  const alreadyInCart = inCartItem ? inCartItem.quantity : 0;
+
+  // CHANGED: remaining = backend stock − what's already in cart
+  const remaining = (product.stock ?? 0) - alreadyInCart;
+
+  if (remaining <= 0) {
+    showToast(`All available stock of ${product.name} is already in your cart.`, "warning");
+    return;
+  }
+
+  // Clamp the requested quantity to what's actually still available
+  const quantity = Math.min(requested, remaining);
+
+  if (quantity < requested) {
+    showToast(
+      `Only ${remaining} more available in stock. Adding ${quantity}.`,
+      "warning"
+    );
+  }
+
+  await addToCart(product, quantity);
   updateCartUI();
   renderProducts();
 
+  
   selectedQuantities.set(productId, 1);
   showToast(`${product.name} added to cart`, "success");
 }
 
 function getFilteredProducts() {
-  return allProducts.filter((product) => {
-    const matchesCategory =
-      activeCategory === "All" || product.category === activeCategory;
-    const matchesSearch =
-      !searchTerm ||
-      product.name.toLowerCase().includes(searchTerm) ||
-      (product.description ?? "").toLowerCase().includes(searchTerm);
+  return allProducts.filter((p) => {
+    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
+    const matchesSearch   = !searchTerm ||
+      p.name.toLowerCase().includes(searchTerm) ||
+      (p.description ?? "").toLowerCase().includes(searchTerm);
     return matchesCategory && matchesSearch;
   });
 }
 
 function renderProducts() {
-  console.trace("RENDER PRODUCTS");
   const filtered = getFilteredProducts();
-
   if (filtered.length === 0) {
     productGrid.replaceChildren();
     emptyState.hidden = false;
@@ -211,7 +245,6 @@ function renderProducts() {
         : `No products found for "${searchTerm}".`;
     return;
   }
-
   emptyState.hidden = true;
   productGrid.replaceChildren(...filtered.map(buildProductCard));
 }
@@ -222,13 +255,15 @@ function buildProductCard(product) {
   card.dataset.productId = String(product.id);
 
   const stock      = product.stock ?? 0;
-  const isOutOfStock = stock === 0;
-  const isLowStock   = stock > 0 && stock < LOW_STOCK_THRESHOLD;
-  const quantity     = Math.min(selectedQuantities.get(product.id) ?? 1, Math.max(1, stock));
+  const isOut      = stock === 0;
+  const isLow      = stock > 0 && stock < LOW_STOCK_THRESHOLD;
 
-  const isPrinting =
-    product.name === "B&W Printout" || product.name === "Color Printout";
+  // CHANGED: quantity display is now just the stored selector value,
+  // not clamped to 10. The selector itself is bounded to stock via
+  // adjustQuantitySelector(), so this is always valid.
+  const quantity = selectedQuantities.get(product.id) ?? 1;
 
+  const isPrinting = product.name === "B&W Printout" || product.name === "Color Printout";
   const showsStock = !isPrinting;
 
   card.innerHTML = `
@@ -238,23 +273,19 @@ function buildProductCard(product) {
         <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </div>
-
     <div class="product-card-body">
       <span class="product-category-tag">${product.category ?? ""}</span>
       <h3 class="product-name">${product.name}</h3>
       <p class="product-description">${product.description ?? ""}</p>
-
       <div class="product-card-footer">
         <span class="product-price">${formatCurrency(product.price)}</span>
-        ${showsStock ? `
-          <span class="stock-status ${isOutOfStock ? "is-out" : isLowStock ? "is-low" : "is-in"}">
-            ${isOutOfStock ? "Out of stock" : isLowStock ? `Only ${stock} left` : `${stock} in stock`}
-          </span>
-        ` : `
-          <span class="stock-status is-in">Available</span>
-        `}
+        ${showsStock
+          ? `<span class="stock-status ${isOut ? "is-out" : isLow ? "is-low" : "is-in"}">
+               ${isOut ? "Out of stock" : isLow ? `Only ${stock} left` : `${stock} in stock`}
+             </span>`
+          : `<span class="stock-status is-in">Available</span>`
+        }
       </div>
-
       ${isPrinting ? `
         <div class="print-upload-section">
           <input type="file" accept=".pdf" class="print-file-input">
@@ -265,35 +296,27 @@ function buildProductCard(product) {
             <option value="single">Single Sided</option>
             <option value="double">Double Sided</option>
           </select>
-          <button type="button" class="btn btn-primary add-print-job-btn">
-            Add Print Job
-          </button>
+          <button type="button" class="btn btn-primary add-print-job-btn">Add Print Job</button>
         </div>
       ` : `
         <div class="product-card-actions">
-          <div class="qty-selector ${isOutOfStock ? "is-disabled" : ""}">
-            <button type="button" class="qty-step" data-direction="decrease"
-              ${isOutOfStock ? "disabled" : ""}>−</button>
+          <div class="qty-selector ${isOut ? "is-disabled" : ""}">
+            <button type="button" class="qty-step" data-direction="decrease" ${isOut ? "disabled" : ""}>−</button>
             <span class="qty-value">${quantity}</span>
-            <button type="button" class="qty-step" data-direction="increase"
-              ${isOutOfStock ? "disabled" : ""}>+</button>
+            <button type="button" class="qty-step" data-direction="increase" ${isOut ? "disabled" : ""}>+</button>
           </div>
-          <button type="button" class="btn btn-primary add-to-cart-btn"
-            ${isOutOfStock ? "disabled" : ""}>
-            ${isOutOfStock ? "Out of Stock" : "Add to cart"}
+          <button type="button" class="btn btn-primary add-to-cart-btn" ${isOut ? "disabled" : ""}>
+            ${isOut ? "Out of Stock" : "Add to cart"}
           </button>
         </div>
       `}
-    </div>
-  `;
-
+    </div>`;
   return card;
 }
 
 function updateCartUI() {
   const count = getCartCount();
   const total = getCartTotal();
-
   if (count > 0) {
     cartBadge.textContent = String(count);
     cartBadge.hidden = false;

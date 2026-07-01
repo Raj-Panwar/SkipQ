@@ -60,4 +60,8 @@ export async function getQueueInfo(id) {
       throw new Error("Failed to load queue");
 
   return response.json();
+  
+}
+export function getStudentOrders(studentId) {
+  return request(`${BASE_URL}/student/${studentId}`);
 }

@@ -174,4 +174,9 @@ order.setStatus("PLACED");
                 peopleAhead,
                 estimatedWait);
     }
+    @Transactional(readOnly = true)
+public List<Order> getOrdersByStudent(Long studentId) {
+
+    return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+}
 }

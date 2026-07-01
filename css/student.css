@@ -1476,7 +1476,7 @@
 /* Desktop: hide bottom nav, use inline navigation */
 @media (min-width: 960px) {
   .student-bottom-nav {
-    display: none;
+    display: flex;
   }
 
   .app-main.has-bottom-nav {
