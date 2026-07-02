@@ -10,7 +10,7 @@ import {
   updateOrderStatus
 } from "./adminApi.js";
 import { showToast } from "../shared/toast.js";
-
+const FILE_API = "http://localhost:8080/api/files";
 const ADMIN_SESSION_KEY = "skipq_admin_session";
 
 if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
@@ -246,7 +246,10 @@ function buildPrintRow(job) {
   const sidedLabel = job.sided === "DOUBLE"     ? "2-sided" : "1-sided";
   const isDone     = job.orderStatus === "COMPLETED";
 
-  const fileName    = job.fileName ?? job.productName ?? "document";
+  const fileName =
+    job.originalFileName ??
+    job.fileName ??
+    "document";
   const displayName = fileName.length > 24 ? fileName.slice(0, 21) + "…" : fileName;
 
   tr.innerHTML = `
@@ -273,12 +276,27 @@ function buildPrintRow(job) {
       </span>
     </td>
     <td class="table-cell table-actions">
-      ${isDone
+  <div class="action-btn-group">
+
+    <a
+      href="${FILE_API}/${job.fileName}"
+      target="_blank"
+      class="btn btn-sm btn-secondary">
+      Download PDF
+    </a>
+
+    ${
+      isDone
         ? `<span class="action-done">Done</span>`
-        : `<button class="btn btn-sm btn-primary print-action-btn"
-             data-order-id="${job.orderId}">Mark Done</button>`
-      }
-    </td>
+        : `<button
+             class="btn btn-sm btn-primary print-action-btn"
+             data-order-id="${job.orderId}">
+             Mark Done
+           </button>`
+    }
+
+  </div>
+</td>
   `;
 
   return tr;

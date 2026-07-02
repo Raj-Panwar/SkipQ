@@ -79,7 +79,8 @@ order.setStatus("PLACED");
                 orderItem.setOrder(order);
 
                 orderItem.setItemType("print");
-                orderItem.setFileName(itemRequest.getFileName());
+               orderItem.setFileName(itemRequest.getFileName());
+orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
                 orderItem.setPages(itemRequest.getPages());
                 orderItem.setCopies(itemRequest.getCopies());
                 orderItem.setColorMode(itemRequest.getColorMode());

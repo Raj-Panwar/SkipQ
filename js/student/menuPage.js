@@ -19,7 +19,7 @@ import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
 
 const LOW_STOCK_THRESHOLD = 10;
-
+const FILE_UPLOAD_API = "http://localhost:8080/api/files/upload";
 const productGrid      = document.getElementById("productGrid");
 const emptyState       = document.getElementById("emptyState");
 const searchInput      = document.getElementById("searchInput");
@@ -99,8 +99,24 @@ function handleCategoryClick(event) {
   });
   renderProducts();
 }
+async function uploadPdf(file) {
 
-function handleGridClick(event) {
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    const response = await fetch(FILE_UPLOAD_API, {
+        method: "POST",
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error("PDF upload failed.");
+    }
+
+    return await response.json();
+}
+async function handleGridClick(event) {
   const stepBtn = event.target.closest(".qty-step");
   if (stepBtn) {
     const card      = stepBtn.closest(".product-card");
@@ -134,11 +150,37 @@ function handleGridClick(event) {
     const pageCount = getMockPageCount(file);
     const colorMode = product.name.toLowerCase().includes("color") ? "COLOR" : "BW";
     const pricePerPage = colorMode === "COLOR" ? 10 : 2;
+    try {
+
+    const uploadResult = await uploadPdf(file);
+
     addPrintJob({
-      fileName: file.name, pages: pageCount, copies,
-      colorMode, sided, paperSize: "A4",
-      totalPrice: pricePerPage * pageCount * copies,
+        fileName: uploadResult.fileName,
+    originalFileName: file.name,
+        pages: pageCount,
+        copies,
+        colorMode,
+        sided,
+        paperSize: "A4",
+        totalPrice: pricePerPage * pageCount * copies,
     });
+
+    updateCartUI();
+
+    showToast(
+        "Print job added successfully.",
+        "success"
+    );
+
+}
+catch (error) {
+
+    showToast(
+        "Failed to upload PDF.",
+        "error"
+    );
+
+}
     updateCartUI();
     showToast(`Print job added — ${copies} × ${file.name}`, "success");
   }

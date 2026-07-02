@@ -9,6 +9,7 @@ public class CreateOrderItemRequest {
 private String fileName;
 private Integer pages;
 private Integer copies;
+private String originalFileName;
 private String colorMode;
 private String sided;
 private String paperSize;
@@ -20,7 +21,12 @@ private Double totalPrice;
 public void setItemType(String itemType) {
     this.itemType = itemType;
 }
-
+public void setOriginalFileName(String originalFileName){
+    this.originalFileName=originalFileName;
+}
+public String getOriginalFileName(){
+    return originalFileName;
+}
 public String getFileName() {
     return fileName;
 }

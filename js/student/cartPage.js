@@ -233,6 +233,7 @@ const payload = {
             return {
                 itemType: "print",
                 fileName: item.fileName,
+originalFileName: item.originalFileName,
                 pages: item.pages,
                 copies: item.copies,
                 colorMode: item.colorMode,

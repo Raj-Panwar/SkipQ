@@ -2,7 +2,8 @@ package com.skipq.backend.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-
+import java.time.LocalDateTime;
+import java.time.LocalDateTime;
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
@@ -25,6 +26,32 @@ public class OrderItem {
     private String colorMode;
     private String sided;
     private String paperSize;
+    @Column(name = "uploaded_at", nullable = false)
+private LocalDateTime uploadedAt;
+
+@PrePersist
+public void onCreate() {
+
+    if (uploadedAt == null) {
+        uploadedAt = LocalDateTime.now();
+    }
+
+}
+public LocalDateTime getUploadedAt() {
+    return uploadedAt;
+}
+
+public void setUploadedAt(LocalDateTime uploadedAt) {
+    this.uploadedAt = uploadedAt;
+}
+    @Column(name = "original_file_name")
+    private String originalFileName;
+    public String getOriginalFileName(){
+        return originalFileName;
+    }
+    public void setOriginalFileName(String originalFileName){
+        this.originalFileName = originalFileName;
+    }
     public String getItemType() {
     return itemType;
 }
@@ -106,3 +133,4 @@ public void setPaperSize(String paperSize) {
 
     public void setOrder(Order order) { this.order = order; }
 }
+
