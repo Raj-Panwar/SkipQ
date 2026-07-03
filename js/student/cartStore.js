@@ -90,15 +90,19 @@ export function addPrintJob(printJob) {
   items.push({
     cartItemId: crypto.randomUUID(),
     itemType: "print",
+
     fileName: printJob.fileName,
+    originalFileName: printJob.originalFileName,
+
     pages: printJob.pages ?? 1,
     copies: printJob.copies,
     colorMode: printJob.colorMode,
     sided: String(printJob.sided || "SINGLE").toUpperCase(),
     paperSize: printJob.paperSize || "A4",
-    totalPrice: Number.isFinite(printJob.totalPrice) ? printJob.totalPrice : 0,
-  });
-
+    totalPrice: Number.isFinite(printJob.totalPrice)
+        ? printJob.totalPrice
+        : 0,
+});
   saveCart(items);
   return items;
 }

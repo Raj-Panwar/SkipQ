@@ -24,12 +24,12 @@ public class FileCleanupService {
     }
     
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 2 * * *")
 public void deleteOldFiles() {
 
     System.out.println("===== Running file cleanup =====");
 
-    LocalDateTime cutoff = LocalDateTime.now().minusMinutes(1);
+    LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
 
     System.out.println("Cutoff: " + cutoff);
 

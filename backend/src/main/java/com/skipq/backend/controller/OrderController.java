@@ -56,8 +56,16 @@ public class OrderController {
     public QueueInfoDTO getQueueInfo(@PathVariable Long id) {
         return orderService.getQueueInfo(id);
     }
+
     @GetMapping("/student/{studentId}")
-public List<Order> getStudentOrders(@PathVariable Long studentId) {
-    return orderService.getOrdersByStudent(studentId);
-}
+    public List<Order> getStudentOrders(@PathVariable Long studentId) {
+        return orderService.getOrdersByStudent(studentId);
+    }
+
+    @GetMapping("/queue/current-serving")
+    public Integer getCurrentServingToken() {
+
+        return orderService.getCurrentServingToken();
+
+    }
 }

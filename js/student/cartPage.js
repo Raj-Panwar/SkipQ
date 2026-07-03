@@ -95,7 +95,7 @@ function buildPrintRow(item) {
     </div>
     <div class="cart-item-details">
       <span class="product-category-tag">Print</span>
-      <h3 class="cart-item-name">${truncate(item.fileName, 28)}</h3>
+      <h3 class="cart-item-name">${truncate(item.originalFileName ?? item.fileName, 28)}</h3>
       <span class="print-item-meta">
         ${item.pages ?? 1} pg × ${item.copies} ${item.copies === 1 ? "copy" : "copies"}
         · ${colorLabel} · ${sidedLabel} · ${item.paperSize}

@@ -12,6 +12,7 @@
 // print jobs, cart summary bar, sticky bar) is unchanged.
 
 import { getMenuProducts } from "./menuApi.js";
+import { getCurrentServingToken } from "./orderApi.js";
 import { addToCart, addPrintJob, getCartCount, getCartTotal, getCart } from "./cartStore.js";
 import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
@@ -20,21 +21,22 @@ import { initStudentNav } from "../shared/nav.js";
 
 const LOW_STOCK_THRESHOLD = 10;
 const FILE_UPLOAD_API = "http://localhost:8080/api/files/upload";
-const productGrid      = document.getElementById("productGrid");
-const emptyState       = document.getElementById("emptyState");
-const searchInput      = document.getElementById("searchInput");
-const categoryTabs     = document.getElementById("categoryTabs");
-const welcomeGreeting  = document.getElementById("welcomeGreeting");
-const cartBadge        = document.getElementById("cartBadge");
-const cartSummaryBar   = document.getElementById("cartSummaryBar");
+const productGrid = document.getElementById("productGrid");
+const emptyState = document.getElementById("emptyState");
+const searchInput = document.getElementById("searchInput");
+const categoryTabs = document.getElementById("categoryTabs");
+const welcomeGreeting = document.getElementById("welcomeGreeting");
+const currentServingText = document.getElementById("currentServingToken");
+const cartBadge = document.getElementById("cartBadge");
+const cartSummaryBar = document.getElementById("cartSummaryBar");
 const cartSummaryCount = document.getElementById("cartSummaryCount");
 const cartSummaryTotal = document.getElementById("cartSummaryTotal");
 
 requireAuth();
 
 let activeCategory = "All";
-let searchTerm     = "";
-let allProducts    = [];
+let searchTerm = "";
+let allProducts = [];
 const selectedQuantities = new Map();
 
 init();
@@ -45,7 +47,27 @@ async function init() {
   const student = getSession();
   if (student?.fullName) {
     welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
+
   }
+  
+  async function loadCurrentServing() {
+
+    try {
+
+      const token = await getCurrentServingToken();
+
+      currentServingText.textContent =
+        `#${String(token).padStart(3, "0")}`;
+
+    } catch (e) {
+
+      currentServingText.textContent =
+        "Loading...";
+
+    }
+
+  }
+  setInterval(loadCurrentServing, 1000);
 
   updateCartUI();
   setGridLoading(true);
@@ -66,7 +88,8 @@ async function init() {
   categoryTabs.addEventListener("click", handleCategoryClick);
   productGrid.addEventListener("click", handleGridClick);
 
- // window.addEventListener("focus", refreshProducts);
+  // window.addEventListener("focus", refreshProducts);
+  
 }
 
 async function refreshProducts() {
@@ -101,25 +124,25 @@ function handleCategoryClick(event) {
 }
 async function uploadPdf(file) {
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    formData.append("file", file);
+  formData.append("file", file);
 
-    const response = await fetch(FILE_UPLOAD_API, {
-        method: "POST",
-        body: formData
-    });
+  const response = await fetch(FILE_UPLOAD_API, {
+    method: "POST",
+    body: formData
+  });
 
-    if (!response.ok) {
-        throw new Error("PDF upload failed.");
-    }
+  if (!response.ok) {
+    throw new Error("PDF upload failed.");
+  }
 
-    return await response.json();
+  return await response.json();
 }
 async function handleGridClick(event) {
   const stepBtn = event.target.closest(".qty-step");
   if (stepBtn) {
-    const card      = stepBtn.closest(".product-card");
+    const card = stepBtn.closest(".product-card");
     const productId = Number(card.dataset.productId);
     const direction = stepBtn.dataset.direction === "increase" ? 1 : -1;
     adjustQuantitySelector(card, productId, direction);
@@ -128,7 +151,7 @@ async function handleGridClick(event) {
 
   const addBtn = event.target.closest(".add-to-cart-btn");
   if (addBtn) {
-    const card      = addBtn.closest(".product-card");
+    const card = addBtn.closest(".product-card");
     const productId = Number(card.dataset.productId);
     handleAddToCart(productId, card);
     return;
@@ -136,51 +159,51 @@ async function handleGridClick(event) {
 
   const printBtn = event.target.closest(".add-print-job-btn");
   if (printBtn) {
-    const card      = printBtn.closest(".product-card");
+    const card = printBtn.closest(".product-card");
     const fileInput = card.querySelector(".print-file-input");
-    const file      = fileInput.files[0];
+    const file = fileInput.files[0];
     if (!file) {
       showToast("Please upload a PDF before adding to cart.", "warning");
       return;
     }
-    const copies    = Number(card.querySelector(".print-copies").value) || 1;
-    const sided     = card.querySelector(".print-sided").value.toUpperCase();
+    const copies = Number(card.querySelector(".print-copies").value) || 1;
+    const sided = card.querySelector(".print-sided").value.toUpperCase();
     const productId = Number(card.dataset.productId);
-    const product   = allProducts.find((p) => p.id === productId);
+    const product = allProducts.find((p) => p.id === productId);
     const pageCount = getMockPageCount(file);
     const colorMode = product.name.toLowerCase().includes("color") ? "COLOR" : "BW";
     const pricePerPage = colorMode === "COLOR" ? 10 : 2;
     try {
 
-    const uploadResult = await uploadPdf(file);
+      const uploadResult = await uploadPdf(file);
 
-    addPrintJob({
+      addPrintJob({
         fileName: uploadResult.fileName,
-    originalFileName: file.name,
+        originalFileName: file.name,
         pages: pageCount,
         copies,
         colorMode,
         sided,
         paperSize: "A4",
         totalPrice: pricePerPage * pageCount * copies,
-    });
+      });
 
-    updateCartUI();
+      updateCartUI();
 
-    showToast(
+      showToast(
         "Print job added successfully.",
         "success"
-    );
+      );
 
-}
-catch (error) {
+    }
+    catch (error) {
 
-    showToast(
+      showToast(
         "Failed to upload PDF.",
         "error"
-    );
+      );
 
-}
+    }
     updateCartUI();
     showToast(`Print job added — ${copies} × ${file.name}`, "success");
   }
@@ -198,16 +221,16 @@ function getMockPageCount(file) {
 function adjustQuantitySelector(card, productId, direction) {
   const product = allProducts.find((p) => p.id === productId);
 
-const cartItem = getCart().find(
+  const cartItem = getCart().find(
     i => i.itemType === "stationery" && i.productId === productId
-);
+  );
 
-const alreadyInCart = cartItem ? cartItem.quantity : 0;
+  const alreadyInCart = cartItem ? cartItem.quantity : 0;
 
-const maxQty = Math.max(0, (product?.stock ?? 0) - alreadyInCart);
+  const maxQty = Math.max(0, (product?.stock ?? 0) - alreadyInCart);
 
-const current = selectedQuantities.get(productId) ?? 1;
-const next = Math.min(maxQty, Math.max(1, current + direction));
+  const current = selectedQuantities.get(productId) ?? 1;
+  const next = Math.min(maxQty, Math.max(1, current + direction));
   selectedQuantities.set(productId, next);
 
   const el = card.querySelector(".qty-value");
@@ -231,8 +254,8 @@ async function handleAddToCart(productId, card) {
   const requested = selectedQuantities.get(productId) ?? 1;
 
   // How many of this product are already sitting in the cart?
-  const cartItems   = getCart();
-  const inCartItem  = cartItems.find(
+  const cartItems = getCart();
+  const inCartItem = cartItems.find(
     (i) => i.itemType === "stationery" && i.productId === productId
   );
   const alreadyInCart = inCartItem ? inCartItem.quantity : 0;
@@ -259,7 +282,7 @@ async function handleAddToCart(productId, card) {
   updateCartUI();
   renderProducts();
 
-  
+
   selectedQuantities.set(productId, 1);
   showToast(`${product.name} added to cart`, "success");
 }
@@ -267,7 +290,7 @@ async function handleAddToCart(productId, card) {
 function getFilteredProducts() {
   return allProducts.filter((p) => {
     const matchesCategory = activeCategory === "All" || p.category === activeCategory;
-    const matchesSearch   = !searchTerm ||
+    const matchesSearch = !searchTerm ||
       p.name.toLowerCase().includes(searchTerm) ||
       (p.description ?? "").toLowerCase().includes(searchTerm);
     return matchesCategory && matchesSearch;
@@ -283,8 +306,8 @@ function renderProducts() {
       activeCategory !== "All" && searchTerm
         ? `No results for "${searchTerm}" in ${activeCategory}.`
         : activeCategory !== "All"
-        ? `No products in ${activeCategory} right now.`
-        : `No products found for "${searchTerm}".`;
+          ? `No products in ${activeCategory} right now.`
+          : `No products found for "${searchTerm}".`;
     return;
   }
   emptyState.hidden = true;
@@ -296,9 +319,9 @@ function buildProductCard(product) {
   card.className = "product-card";
   card.dataset.productId = String(product.id);
 
-  const stock      = product.stock ?? 0;
-  const isOut      = stock === 0;
-  const isLow      = stock > 0 && stock < LOW_STOCK_THRESHOLD;
+  const stock = product.stock ?? 0;
+  const isOut = stock === 0;
+  const isLow = stock > 0 && stock < LOW_STOCK_THRESHOLD;
 
   // CHANGED: quantity display is now just the stored selector value,
   // not clamped to 10. The selector itself is bounded to stock via
@@ -322,11 +345,11 @@ function buildProductCard(product) {
       <div class="product-card-footer">
         <span class="product-price">${formatCurrency(product.price)}</span>
         ${showsStock
-          ? `<span class="stock-status ${isOut ? "is-out" : isLow ? "is-low" : "is-in"}">
+      ? `<span class="stock-status ${isOut ? "is-out" : isLow ? "is-low" : "is-in"}">
                ${isOut ? "Out of stock" : isLow ? `Only ${stock} left` : `${stock} in stock`}
              </span>`
-          : `<span class="stock-status is-in">Available</span>`
-        }
+      : `<span class="stock-status is-in">Available</span>`
+    }
       </div>
       ${isPrinting ? `
         <div class="print-upload-section">

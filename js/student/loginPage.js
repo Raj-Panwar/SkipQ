@@ -7,7 +7,7 @@
 import { loginStudent } from "../api/studentApi.js";
 import { setSession, isLoggedIn } from "../shared/auth.js";
 import { isValidEmail, isValidPassword } from "../utils/validators.js";
-
+import { getCurrentServingToken } from "./orderApi.js";
 const form = document.getElementById("loginForm");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -21,8 +21,8 @@ const togglePasswordBtn = document.getElementById("togglePassword");
 if (isLoggedIn()) {
   window.location.href = "./menu.html";
 }
-
-initQueueSimulation();
+loadCurrentServing();
+setInterval(loadCurrentServing, 1000);
 
 togglePasswordBtn.addEventListener("click", () => {
   const isHidden = passwordInput.type === "password";
@@ -119,34 +119,28 @@ function setLoading(isLoading) {
  * and the horizontal timeline shifts — purely illustrative, no API call.
  * Respects prefers-reduced-motion (shows a static snapshot).
  */
-function initQueueSimulation() {
-  const tokenNumberEl = document.getElementById("tokenNumber");
-  const progressFill = document.getElementById("progressFill");
-  const statusEl = document.getElementById("tokenStatus");
-  const timeline = document.getElementById("tokenTimeline");
+async function loadCurrentServing() {
+  try {
+    const token = await getCurrentServingToken();
+    const padded = String(token).padStart(3, "0");
 
-  if (!tokenNumberEl || !progressFill || !timeline) return;
+    document.getElementById("tokenNumber").textContent = `#${padded}`;
 
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (prefersReducedMotion) return;
+    document.getElementById("tokenStatus").innerHTML = `
+      <span class="status-dot" aria-hidden="true"></span>
+      Token #${padded} is being prepared — almost ready
+    `;
 
-  let current = 46;
+    shiftTimeline(
+      document.getElementById("tokenTimeline"),
+      token
+    );
 
-  setInterval(() => {
-    progressFill.style.width = "30%";
-
-    setTimeout(() => {
-      current += 1;
-      const padded = String(current).padStart(3, "0");
-
-      tokenNumberEl.textContent = `#${padded}`;
-      progressFill.style.width = "64%";
-      statusEl.innerHTML = `<span class="status-dot" aria-hidden="true"></span> Token #${padded} is being prepared — almost ready`;
-
-      shiftTimeline(timeline, current);
-    }, 700);
-  }, 4000);
+  } catch (err) {
+    console.error(err);
+  }
 }
+
 
 /**
  * Shifts the horizontal chip timeline so the new "current" token

@@ -61,8 +61,14 @@ export async function getDashboardStats() {
   ).length;
 
   const pendingPrintJobs = orders
+    .filter(
+        (o) =>
+            o.status !== "COMPLETED" &&
+            o.status !== "CANCELLED"
+    )
     .flatMap((o) => o.items ?? [])
-    .filter((item) => item.itemType === "print").length;
+    .filter((item) => item.itemType === "print")
+    .length;
 
   const revenueToday = todayOrders
     .filter((o) => o.status !== "CANCELLED")

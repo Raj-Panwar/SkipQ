@@ -176,6 +176,12 @@ orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
                 estimatedWait);
     }
     @Transactional(readOnly = true)
+public Integer getCurrentServingToken() {
+
+    return orderRepository.findCurrentServingToken();
+
+}
+    @Transactional(readOnly = true)
 public List<Order> getOrdersByStudent(Long studentId) {
 
     return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);

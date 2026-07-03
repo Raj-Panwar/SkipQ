@@ -65,3 +65,6 @@ export async function getQueueInfo(id) {
 export function getStudentOrders(studentId) {
   return request(`${BASE_URL}/student/${studentId}`);
 }
+export function getCurrentServingToken() {
+    return request(`${BASE_URL}/queue/current-serving`);
+}
