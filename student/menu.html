@@ -85,14 +85,27 @@
 
   <main class="app-main">
 
-    <section class="welcome-block">
-      <p class="welcome-greeting" id="welcomeGreeting">Welcome </p>
-      <p class="welcome-insight">
-        <span class="status-dot" aria-hidden="true"></span>
-        Currently serving token
-        <strong id="currentServingToken">Loading...</strong>
-      </p>
-    </section>
+   <section class="welcome-block">
+  <p class="welcome-greeting" id="welcomeGreeting">Welcome</p>
+
+  <p class="welcome-insight">
+    <span class="status-dot" aria-hidden="true"></span>
+    Currently serving token
+    <strong id="currentServingToken">Loading...</strong>
+  </p>
+</section>
+
+<div class="queue-status-card">
+    <div class="queue-title">Estimated Wait</div>
+
+    <div id="estimated-wait-time" class="queue-wait">
+        Calculating...
+    </div>
+
+    <div class="queue-subtitle">
+        If you order now
+    </div>
+</div>
 
     <nav class="category-tabs" id="categoryTabs" aria-label="Product categories">
       <button class="category-chip is-active" data-category="All" type="button">All</button>

@@ -7,6 +7,7 @@ import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.entity.OrderItem;
+import com.skipq.backend.dto.WaitEstimateDTO;
 import com.skipq.backend.entity.Product;
 import com.skipq.backend.repository.OrderRepository;
 import com.skipq.backend.repository.ProductRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,65 +25,91 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final StudentRepository studentRepository;
     private final NotificationService notificationService;
+    private final WaitTimeService waitTimeService;
 
-    public OrderService(OrderRepository orderRepository,
-        ProductRepository productRepository,
-        StudentRepository studentRepository, NotificationService notificationService) {
+    public OrderService(
+            OrderRepository orderRepository,
+            ProductRepository productRepository,
+            StudentRepository studentRepository,
+            NotificationService notificationService,
+            WaitTimeService waitTimeService) {
 
-    this.orderRepository = orderRepository;
-    this.productRepository = productRepository;
-    this.studentRepository = studentRepository;
-    this.notificationService = notificationService;
-}
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.studentRepository = studentRepository;
+        this.notificationService = notificationService;
+        this.waitTimeService = waitTimeService;
 
-    @Transactional
-public Order updateStatus(Long id, String status) {
-
-    Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
-
-    String previousStatus = order.getStatus();
-
-    // Prevent duplicate updates and notifications
-    if (status.equals(previousStatus)) {
-        return order;
     }
 
-    order.setStatus(status);
+    @Transactional
+    public Order updateStatus(Long id, String status) {
 
-    Order saved = orderRepository.save(order);
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
 
-    notificationService.notifyStatusChange(saved, status);
+        String previousStatus = order.getStatus();
 
-    return saved;
-}
-    
+        // Prevent duplicate updates and notifications
+        if (status.equals(previousStatus)) {
+            return order;
+        }
+
+        order.setStatus(status);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        switch (status) {
+            case "PREPARING":
+                if (order.getPreparingAt() == null) {
+                    order.setPreparingAt(now);
+                }
+                break;
+
+            case "READY":
+                if (order.getReadyAt() == null) {
+                    order.setReadyAt(now);
+                }
+
+                waitTimeService.invalidateCache();
+                break;
+
+            case "COMPLETED":
+                if (order.getCompletedAt() == null) {
+                    order.setCompletedAt(now);
+                }
+                break;
+        }
+        Order saved = orderRepository.save(order);
+
+        notificationService.notifyStatusChange(saved, status);
+
+        return saved;
+    }
 
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
 
         Order order = new Order();
 
-if (request.getStudentId() != null) {
+        if (request.getStudentId() != null) {
 
-    Student student = studentRepository.findById(request.getStudentId())
-            .orElseThrow(() ->
-                    new RuntimeException("Student not found"));
+            Student student = studentRepository.findById(request.getStudentId())
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
 
-    order.setStudent(student);
+            order.setStudent(student);
 
-    order.setStudentName(student.getFullName());
+            order.setStudentName(student.getFullName());
 
-} else {
+        } else {
 
-    order.setStudentName(
-            request.getStudentName() != null
-                    ? request.getStudentName()
-                    : "Guest"
-    );
-}
+            order.setStudentName(
+                    request.getStudentName() != null
+                            ? request.getStudentName()
+                            : "Guest");
+        }
 
-order.setStatus("PLACED");
+        order.setStatus("PLACED");
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -93,8 +121,8 @@ order.setStatus("PLACED");
                 orderItem.setOrder(order);
 
                 orderItem.setItemType("print");
-               orderItem.setFileName(itemRequest.getFileName());
-orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
+                orderItem.setFileName(itemRequest.getFileName());
+                orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
                 orderItem.setPages(itemRequest.getPages());
                 orderItem.setCopies(itemRequest.getCopies());
                 orderItem.setColorMode(itemRequest.getColorMode());
@@ -180,7 +208,11 @@ orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
 
         int peopleAhead = (int) orderRepository.countPeopleAhead(order.getTokenNumber());
 
-        int estimatedWait = peopleAhead * 3;
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
+
+        Integer estimatedWait = (avgPrepMinutes == null)
+                ? null
+                : (int) Math.ceil(peopleAhead * avgPrepMinutes);
 
         return new QueueInfoDTO(
                 order.getTokenNumber(),
@@ -190,14 +222,32 @@ orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
                 estimatedWait);
     }
     @Transactional(readOnly = true)
-public Integer getCurrentServingToken() {
+public WaitEstimateDTO getCurrentWaitEstimate() {
 
-    return orderRepository.findCurrentServingToken();
+    long ordersAhead = orderRepository.countActiveOrders();
 
+    Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
+
+    Integer estimatedWait = (avgPrepMinutes == null)
+            ? null
+            : (int) Math.ceil(ordersAhead * avgPrepMinutes);
+
+    return new WaitEstimateDTO(
+            ordersAhead,
+            estimatedWait
+    );
 }
+
     @Transactional(readOnly = true)
-public List<Order> getOrdersByStudent(Long studentId) {
+    public Integer getCurrentServingToken() {
 
-    return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
-}
+        return orderRepository.findCurrentServingToken();
+
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> getOrdersByStudent(Long studentId) {
+
+        return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+    }
 }

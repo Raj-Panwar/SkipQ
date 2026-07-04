@@ -12,7 +12,10 @@
 // print jobs, cart summary bar, sticky bar) is unchanged.
 
 import { getMenuProducts } from "./menuApi.js";
-import { getCurrentServingToken } from "./orderApi.js";
+import {
+  getCurrentServingToken,
+  getCurrentWaitEstimate
+} from "./orderApi.js";
 import { addToCart, addPrintJob, getCartCount, getCartTotal, getCart } from "./cartStore.js";
 import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
@@ -27,6 +30,7 @@ const searchInput = document.getElementById("searchInput");
 const categoryTabs = document.getElementById("categoryTabs");
 const welcomeGreeting = document.getElementById("welcomeGreeting");
 const currentServingText = document.getElementById("currentServingToken");
+const estimatedWaitText = document.getElementById("estimated-wait-time");
 const cartBadge = document.getElementById("cartBadge");
 const cartSummaryBar = document.getElementById("cartSummaryBar");
 const cartSummaryCount = document.getElementById("cartSummaryCount");
@@ -43,17 +47,18 @@ init();
 
 async function init() {
   initStudentNav("menu");
- const student = getSession();
+  const student = getSession();
 
   if (student) {
     initNotifications(student.id);
   }
 
-  
+
   if (student?.fullName) {
     welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
 
   }
+  
 
   async function loadCurrentServing() {
 
@@ -72,7 +77,37 @@ async function init() {
     }
 
   }
+  async function loadEstimatedWait() {
+
+  try {
+
+    const data = await getCurrentWaitEstimate();
+
+    if (data.estimatedWaitMinutes == null) {
+      estimatedWaitText.textContent = "Calculating...";
+      return;
+    }
+
+    if (data.ordersAhead === 0) {
+      estimatedWaitText.textContent = "No waiting";
+      return;
+    }
+
+    estimatedWaitText.textContent =
+      `≈ ${data.estimatedWaitMinutes} min wait`;
+
+  } catch (e) {
+
+    estimatedWaitText.textContent = "--";
+
+  }
+
+}
+  await loadCurrentServing();
   setInterval(loadCurrentServing, 1000);
+
+  await loadEstimatedWait();
+  setInterval(loadEstimatedWait, 30000);
 
   updateCartUI();
   setGridLoading(true);
@@ -94,6 +129,7 @@ async function init() {
   productGrid.addEventListener("click", handleGridClick);
 
   // window.addEventListener("focus", refreshProducts);
+  
 
 }
 

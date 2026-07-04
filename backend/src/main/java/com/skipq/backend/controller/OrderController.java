@@ -4,7 +4,7 @@ import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.service.OrderService;
-
+import com.skipq.backend.dto.WaitEstimateDTO;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -47,12 +47,17 @@ public class OrderController {
         return orderService.getAllOrders();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/wait-estimate")
+    public WaitEstimateDTO getCurrentWaitEstimate() {
+        return orderService.getCurrentWaitEstimate();
+    }
+
+    @GetMapping("/{id:\\d+}")
     public Order getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
     }
 
-    @GetMapping("/{id}/queue")
+    @GetMapping("/{id:\\d+}/queue")
     public QueueInfoDTO getQueueInfo(@PathVariable Long id) {
         return orderService.getQueueInfo(id);
     }
@@ -68,4 +73,5 @@ public class OrderController {
         return orderService.getCurrentServingToken();
 
     }
+
 }

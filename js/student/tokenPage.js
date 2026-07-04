@@ -31,6 +31,7 @@ let nowServingValue = myTokenValue;
 renderOrderSummary(order);
 
 loadQueue();
+setInterval(loadQueue, 5000);
 
 
 
@@ -81,8 +82,13 @@ function renderQueueState(queue) {
 
     queuePositionEl.textContent = queue.peopleAhead;
 
-    waitEstimateEl.textContent =
-        queue.estimatedWait + " min";
+    if (queue.estimatedWait == null) {
+    waitEstimateEl.textContent = "Calculating...";
+} else if (queue.peopleAhead === 0) {
+    waitEstimateEl.textContent = "No waiting";
+} else {
+    waitEstimateEl.textContent = `${queue.estimatedWait} min`;
+}
 
     const progressPercent =
         queue.peopleAhead === 0

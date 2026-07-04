@@ -68,3 +68,6 @@ export function getStudentOrders(studentId) {
 export function getCurrentServingToken() {
     return request(`${BASE_URL}/queue/current-serving`);
 }
+export function getCurrentWaitEstimate() {
+    return request(`${BASE_URL}/wait-estimate`);
+}
