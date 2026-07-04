@@ -6,11 +6,13 @@ import com.skipq.backend.entity.Order;
 import com.skipq.backend.service.OrderService;
 import com.skipq.backend.dto.WaitEstimateDTO;
 import jakarta.validation.Valid;
-
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -72,6 +74,18 @@ public class OrderController {
 
         return orderService.getCurrentServingToken();
 
+    }
+    @GetMapping("/search")
+    public Page<Order> searchOrders(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+                System.out.println("Query = " + query);
+
+        return orderService.searchOrders(query, status, date, sort, page, size);
     }
 
 }

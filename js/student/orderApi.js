@@ -71,3 +71,23 @@ export function getCurrentServingToken() {
 export function getCurrentWaitEstimate() {
     return request(`${BASE_URL}/wait-estimate`);
 }
+export function searchOrders({
+  query = "",
+  status = "",
+  date = "",
+  sort = "newest",
+  page = 0,
+  size = 20,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (query) params.append("query", query);
+  if (status) params.append("status", status);
+  if (date) params.append("date", date);
+
+  params.append("sort", sort);
+  params.append("page", page);
+  params.append("size", size);
+
+  return request(`${BASE_URL}/search?${params.toString()}`);
+}

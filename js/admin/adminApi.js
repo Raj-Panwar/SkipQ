@@ -91,3 +91,23 @@ export async function updateOrderStatus(orderId, status) {
     }
   );
 }
+export function searchOrders({
+  query = "",
+  status = "",
+  date = "",
+  sort = "newest",
+  page = 0,
+  size = 20,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (query) params.append("query", query);
+  if (status) params.append("status", status);
+  if (date) params.append("date", date);
+
+  params.append("sort", sort);
+  params.append("page", page);
+  params.append("size", size);
+
+  return request(`${ORDERS_URL}/search?${params.toString()}`);
+}

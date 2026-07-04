@@ -7,8 +7,10 @@
 
 import {
   getDashboardStats,
-  updateOrderStatus
+  updateOrderStatus,
+  searchOrders
 } from "./adminApi.js";
+import { renderPagination } from "../shared/pagination.js";
 import { showToast } from "../shared/toast.js";
 const FILE_API = "http://localhost:8080/api/files";
 const ADMIN_SESSION_KEY = "skipq_admin_session";
@@ -18,20 +20,38 @@ if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
 }
 
 // Stat card elements
-const statOrdersEl  = document.getElementById("statOrdersToday");
-const statTokensEl  = document.getElementById("statActiveTokens");
-const statPrintEl   = document.getElementById("statPendingPrint");
+const statOrdersEl = document.getElementById("statOrdersToday");
+const statTokensEl = document.getElementById("statActiveTokens");
+const statPrintEl = document.getElementById("statPendingPrint");
 const statRevenueEl = document.getElementById("statRevenue");
 
 // Table bodies
 const ordersTableBody = document.getElementById("ordersTableBody");
-const printTableBody  = document.getElementById("printTableBody");
+const ordersPageInfo = document.getElementById("ordersPageInfo");
+const printTableBody = document.getElementById("printTableBody");
 
 // Header buttons
-const refreshBtn     = document.getElementById("refreshBtn");
+const refreshBtn = document.getElementById("refreshBtn");
 const logoutAdminBtn = document.getElementById("logoutAdminBtn");
 
+//Search Buttons
+const orderSearchInput = document.getElementById("orderSearchInput");
+const orderStatusFilter = document.getElementById("orderStatusFilter");
+const orderDateFilter = document.getElementById("orderDateFilter");
+const orderSortFilter = document.getElementById("orderSortFilter");
+
 let refreshInterval = null;
+let searchTimeout = null;
+
+const filters = {
+  query: "",
+  status: "",
+  date: "",
+  sort: "newest",
+  page: 0,
+  size: 15,
+};
+let currentOrdersPage = null;
 
 init();
 
@@ -48,6 +68,33 @@ function init() {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
     showToast("Logged out", "info", 1200);
     setTimeout(() => { window.location.href = "./login.html"; }, 900);
+  });
+  orderSearchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+
+    searchTimeout = setTimeout(() => {
+      filters.query = orderSearchInput.value.trim();
+      filters.page = 0;
+      performSearch();
+    }, 400);
+  });
+
+  orderStatusFilter.addEventListener("change", () => {
+    filters.status = orderStatusFilter.value;
+    filters.page = 0;
+    performSearch();
+  });
+
+  orderDateFilter.addEventListener("change", () => {
+    filters.date = orderDateFilter.value;
+    filters.page = 0;
+    performSearch();
+  });
+
+  orderSortFilter.addEventListener("change", () => {
+    filters.sort = orderSortFilter.value;
+    filters.page = 0;
+    performSearch();
   });
 
   ordersTableBody.addEventListener("click", handleOrderAction);
@@ -71,10 +118,69 @@ async function renderAll() {
   }
 
   renderStats(stats);
-  renderOrdersTable(stats.orders);
-  renderPrintTable(stats.orders);
-}
 
+await loadOrders();
+
+renderPrintTable(stats.orders);
+}
+async function loadOrders() {
+
+  setTablesLoading();
+
+  try {
+
+    const page = await searchOrders(filters);
+
+    currentOrdersPage = page;
+
+    renderOrdersTable(page.content);
+    renderPageInfo(page);
+    renderPagination(
+    "ordersPagination",
+    page,
+    (newPage) => {
+        filters.page = newPage;
+        loadOrders();
+    }
+);
+
+  } catch (error) {
+
+    showToast(error.message, "error");
+
+    setTablesError();
+  }
+
+}
+async function performSearch() {
+
+  const hasFilters =
+    filters.query ||
+    filters.status ||
+    filters.date ||
+    filters.sort !== "newest";
+
+  if (!hasFilters) {
+    renderAll();
+    return;
+  }
+
+  setTablesLoading();
+
+  try {
+
+    const page = await searchOrders(filters);
+
+    renderOrdersTable(page.content);
+    
+
+  } catch (error) {
+
+    showToast(error.message, "error");
+    setTablesError();
+
+  }
+}
 // ---------------------------------------------------------------------------
 // Stats cards
 // ---------------------------------------------------------------------------
@@ -82,15 +188,15 @@ async function renderAll() {
 function renderStats(stats) {
   animateCount(statOrdersEl, stats.totalOrdersToday);
   animateCount(statTokensEl, stats.activeTokens);
-  animateCount(statPrintEl,  stats.pendingPrintJobs);
+  animateCount(statPrintEl, stats.pendingPrintJobs);
   statRevenueEl.textContent = formatCurrency(stats.revenueToday);
 }
 
 function animateCount(el, target) {
-  const start    = Number(el.textContent) || 0;
+  const start = Number(el.textContent) || 0;
   if (start === target) return;
   const duration = 500;
-  const t0       = performance.now();
+  const t0 = performance.now();
   function step(now) {
     const t = Math.min((now - t0) / duration, 1);
     el.textContent = Math.round(start + (target - start) * t);
@@ -113,8 +219,32 @@ function renderOrdersTable(orders) {
   }
 
   ordersTableBody.replaceChildren(
-    ...orders.slice(0, 15).map(buildOrderRow)
+    ...orders.map(buildOrderRow)
+);
+}
+function renderPageInfo(page) {
+
+  if (!page) {
+    ordersPageInfo.textContent = "";
+    return;
+  }
+
+  const start = page.totalElements === 0
+    ? 0
+    : page.number * page.size + 1;
+
+  const end = Math.min(
+    (page.number + 1) * page.size,
+    page.totalElements
   );
+
+ ordersPageInfo.innerHTML = `
+    <b>${page.totalElements}</b>Orders
+    •
+    Showing<b>${start}-${end}</b>
+    •
+    Page<b>${page.number + 1}</b> of <b>${page.totalPages}</b>
+`;
 }
 
 function buildOrderRow(order) {
@@ -147,24 +277,24 @@ function buildOrderRow(order) {
     </td>
     <td class="table-cell table-actions">
       ${isTerminal
-        ? `<span class="action-done">—</span>`
-        : `<div class="action-btn-group">
+      ? `<span class="action-done">—</span>`
+      : `<div class="action-btn-group">
              ${order.status === "PLACED"
-               ? `<button class="btn btn-sm btn-secondary order-action-btn"
+        ? `<button class="btn btn-sm btn-secondary order-action-btn"
                     data-next="PREPARING">Accept</button>`
-               : ""}
+        : ""}
              ${order.status === "PREPARING"
-               ? `<button class="btn btn-sm btn-secondary order-action-btn"
+        ? `<button class="btn btn-sm btn-secondary order-action-btn"
                     data-next="READY">Mark Ready</button>`
-               : ""}
+        : ""}
              ${order.status === "READY"
-               ? `<button class="btn btn-sm btn-primary order-action-btn"
+        ? `<button class="btn btn-sm btn-primary order-action-btn"
                     data-next="COMPLETED">Mark Served</button>`
-               : ""}
+        : ""}
              <button class="btn btn-sm btn-danger order-action-btn"
                data-next="CANCELLED">Cancel</button>
            </div>`
-      }
+    }
     </td>
   `;
 
@@ -219,7 +349,7 @@ function renderPrintTable(orders) {
       .filter((item) => item.itemType === "print")
       .map((item) => ({
         ...item,
-        orderId:     order.id,
+        orderId: order.id,
         tokenNumber: order.tokenNumber,
         studentName: order.studentName,
         orderStatus: order.status,
@@ -243,8 +373,8 @@ function buildPrintRow(job) {
   const tr = document.createElement("tr");
 
   const colorLabel = job.colorMode === "COLOR" ? "Color" : "B/W";
-  const sidedLabel = job.sided === "DOUBLE"     ? "2-sided" : "1-sided";
-  const isDone     = job.orderStatus === "COMPLETED";
+  const sidedLabel = job.sided === "DOUBLE" ? "2-sided" : "1-sided";
+  const isDone = job.orderStatus === "COMPLETED";
 
   const fileName =
     job.originalFileName ??
@@ -285,10 +415,9 @@ function buildPrintRow(job) {
       Download PDF
     </a>
 
-    ${
-      isDone
-        ? `<span class="action-done">Done</span>`
-        : `<button
+    ${isDone
+      ? `<span class="action-done">Done</span>`
+      : `<button
              class="btn btn-sm btn-primary print-action-btn"
              data-order-id="${job.orderId}">
              Mark Done
@@ -366,16 +495,16 @@ function formatCurrency(amount) {
 function formatTime(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleTimeString("en-IN", {
-    hour:   "numeric",
+    hour: "numeric",
     minute: "2-digit",
   });
 }
 
 function statusBadgeClass(status) {
   return {
-    PLACED:    "badge-placed",
+    PLACED: "badge-placed",
     PREPARING: "badge-preparing",
-    READY:     "badge-ready",
+    READY: "badge-ready",
     COMPLETED: "badge-completed",
     CANCELLED: "badge-cancelled",
   }[status] ?? "badge-placed";

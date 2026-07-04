@@ -3,12 +3,14 @@ package com.skipq.backend.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.skipq.backend.entity.Order;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     @Query("""
                 SELECT DISTINCT o

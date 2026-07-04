@@ -3,6 +3,9 @@ package com.skipq.backend.service;
 import com.skipq.backend.entity.Student;
 import com.skipq.backend.repository.StudentRepository;
 import com.skipq.backend.dto.CreateOrderItemRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
@@ -10,11 +13,16 @@ import com.skipq.backend.entity.OrderItem;
 import com.skipq.backend.dto.WaitEstimateDTO;
 import com.skipq.backend.entity.Product;
 import com.skipq.backend.repository.OrderRepository;
+import com.skipq.backend.repository.OrderSpecifications;
 import com.skipq.backend.repository.ProductRepository;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -221,22 +229,22 @@ public class OrderService {
                 peopleAhead,
                 estimatedWait);
     }
+
     @Transactional(readOnly = true)
-public WaitEstimateDTO getCurrentWaitEstimate() {
+    public WaitEstimateDTO getCurrentWaitEstimate() {
 
-    long ordersAhead = orderRepository.countActiveOrders();
+        long ordersAhead = orderRepository.countActiveOrders();
 
-    Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
 
-    Integer estimatedWait = (avgPrepMinutes == null)
-            ? null
-            : (int) Math.ceil(ordersAhead * avgPrepMinutes);
+        Integer estimatedWait = (avgPrepMinutes == null)
+                ? null
+                : (int) Math.ceil(ordersAhead * avgPrepMinutes);
 
-    return new WaitEstimateDTO(
-            ordersAhead,
-            estimatedWait
-    );
-}
+        return new WaitEstimateDTO(
+                ordersAhead,
+                estimatedWait);
+    }
 
     @Transactional(readOnly = true)
     public Integer getCurrentServingToken() {
@@ -249,5 +257,26 @@ public WaitEstimateDTO getCurrentWaitEstimate() {
     public List<Order> getOrdersByStudent(Long studentId) {
 
         return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Order> searchOrders(String query, String status, LocalDate date,
+            String sort, int page, int size) {
+        Specification<Order> spec = Specification
+                .where(OrderSpecifications.matchesQuery(query))
+                .and(OrderSpecifications.hasStatus(status))
+                .and(OrderSpecifications.createdOnDate(date));
+        System.out.println("query = " + query);
+
+        Sort sortOrder = "oldest".equalsIgnoreCase(sort)
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Page<Order> result = orderRepository.findAll(spec, pageable);
+
+        System.out.println("Matched orders = " + result.getTotalElements());
+
+        return orderRepository.findAll(spec, pageable);
     }
 }
