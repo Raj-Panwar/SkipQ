@@ -22,26 +22,40 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final StudentRepository studentRepository;
+    private final NotificationService notificationService;
 
     public OrderService(OrderRepository orderRepository,
         ProductRepository productRepository,
-        StudentRepository studentRepository) {
+        StudentRepository studentRepository, NotificationService notificationService) {
 
     this.orderRepository = orderRepository;
     this.productRepository = productRepository;
     this.studentRepository = studentRepository;
+    this.notificationService = notificationService;
 }
 
     @Transactional
-    public Order updateStatus(Long id, String status) {
+public Order updateStatus(Long id, String status) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
 
-        order.setStatus(status);
+    String previousStatus = order.getStatus();
 
-        return orderRepository.save(order);
+    // Prevent duplicate updates and notifications
+    if (status.equals(previousStatus)) {
+        return order;
     }
+
+    order.setStatus(status);
+
+    Order saved = orderRepository.save(order);
+
+    notificationService.notifyStatusChange(saved, status);
+
+    return saved;
+}
+    
 
     @Transactional
     public Order createOrder(CreateOrderRequest request) {

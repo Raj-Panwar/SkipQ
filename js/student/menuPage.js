@@ -18,7 +18,7 @@ import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
-
+import { initNotifications } from "./notification.js";
 const LOW_STOCK_THRESHOLD = 10;
 const FILE_UPLOAD_API = "http://localhost:8080/api/files/upload";
 const productGrid = document.getElementById("productGrid");
@@ -43,13 +43,18 @@ init();
 
 async function init() {
   initStudentNav("menu");
+ const student = getSession();
 
-  const student = getSession();
+  if (student) {
+    initNotifications(student.id);
+  }
+
+  
   if (student?.fullName) {
     welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
 
   }
-  
+
   async function loadCurrentServing() {
 
     try {
@@ -89,7 +94,7 @@ async function init() {
   productGrid.addEventListener("click", handleGridClick);
 
   // window.addEventListener("focus", refreshProducts);
-  
+
 }
 
 async function refreshProducts() {
