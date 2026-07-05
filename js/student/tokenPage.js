@@ -17,7 +17,11 @@ const tokenTimeline = document.getElementById("tokenTimeline");
 const orderSummaryItems = document.getElementById("orderSummaryItems");
 const orderTotalEl = document.getElementById("orderTotal");
 const cancelOrderBtn = document.getElementById("cancelOrderBtn");
-
+const servingRow = document.getElementById("servingRow");
+const cancelledMessage = document.getElementById("cancelledMessage");
+const progressSection = document.getElementById("progressSection");
+const waitEstimateRow = document.getElementById("waitEstimateRow");
+const queueTimelineSection = document.getElementById("queueTimelineSection");
 const DEV_MODE = true;
 if (!DEV_MODE && !isAuthenticated()) {
   window.location.href = "./login.html";
@@ -26,17 +30,13 @@ if (!DEV_MODE && !isAuthenticated()) {
 initStudentNav("token");
 
 const order = loadOrder();
-console.log(
-  "Loaded Order:",
-  JSON.parse(sessionStorage.getItem("skipq_latest_order"))
-);
 let myTokenValue = parseTokenNumber(order.tokenNumber);
 let nowServingValue = myTokenValue;
 
 renderOrderSummary(order);
 
 loadQueue();
-setInterval(loadQueue, 5000);
+const queueRefreshInterval = setInterval(loadQueue, 5000);
 
 
 
@@ -120,19 +120,25 @@ async function loadQueue() {
     nowServingValue = queue.currentServing;
 
     renderQueueState(queue);
+    if (queue.status === "CANCELLED") {
+    clearInterval(queueRefreshInterval);
+}
 
   } catch (err) {
     console.error(err);
   }
 }
 
-loadQueue();
-
-setInterval(loadQueue, 5000);
 cancelOrderBtn.addEventListener("click", handleCancelOrder);
 function updateStatusBadge(status) {
-  console.log("Current status:", status);
   cancelOrderBtn.hidden = status !== "PLACED";
+  const isCancelled = status === "CANCELLED";
+  cancelledMessage.hidden = !isCancelled;
+
+  servingRow.hidden = isCancelled;
+  progressSection.hidden = isCancelled;
+  waitEstimateRow.hidden = isCancelled;
+  queueTimelineSection.hidden = isCancelled;
 
   statusBadge.classList.remove(
     "badge-placed",
@@ -213,18 +219,20 @@ async function handleCancelOrder() {
   }
 
   try {
+    cancelOrderBtn.disabled = true;
+    cancelOrderBtn.textContent = "Cancelling...";
 
     await cancelOrder(order.id, order.student.id);
 
-    alert("Order cancelled successfully.");
-
-    loadQueue();
+    await loadQueue();
 
   } catch (err) {
 
-    alert(err.message);
+  cancelOrderBtn.disabled = false;
+  cancelOrderBtn.textContent = "Cancel Order";
 
-  }
+  alert(err.message);
+}
 }
 /*function startSimulation() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

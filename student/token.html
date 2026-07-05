@@ -36,17 +36,24 @@
       <p class="token-hero-label">Your token</p>
       <p class="token-hero-number" id="myTokenNumber">#052</p>
       <span class="badge badge-preparing" id="statusBadge">Preparing</span>
+      <div class="cancelled-message card" id="cancelledMessage" hidden>
+        <h3>✓ Order Cancelled</h3>
+        <p>
+          Your order has been cancelled successfully.
+          Any reserved stock has been returned to inventory.
+        </p>
+      </div>
 
-      <div class="serving-row">
+      <div class="serving-row" id="servingRow">
         <span>Now serving</span>
         <strong id="nowServingNumber">#046</strong>
       </div>
 
-      <div class="token-progress-track token-progress-track-large">
+      <div class="token-progress-track token-progress-track-large" id="progressSection">
         <div class="token-progress-fill" id="progressFill"></div>
       </div>
 
-      <p class="wait-estimate">
+      <p class="wait-estimate" id="waitEstimateRow">
         Estimated wait: <strong id="waitEstimate">18 min</strong> · Position <strong id="queuePosition">6</strong> in
         line
       </p>
@@ -57,7 +64,7 @@
       </button>
     </div>
 
-    <section class="queue-timeline-card card">
+    <section class="queue-timeline-card card" id="queueTimelineSection">
       <p class="queue-timeline-label">Live queue timeline</p>
       <div class="token-timeline token-timeline-light" id="tokenTimeline">
         <span class="timeline-chip" data-served>042</span>
