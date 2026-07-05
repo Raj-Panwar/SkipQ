@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.skipq.backend.constants.InventoryConstants;
 import com.skipq.backend.entity.Product;
 import com.skipq.backend.repository.ProductRepository;
 
@@ -21,28 +23,37 @@ public class ProductService {
     public Product saveProduct(Product product) {
         return repository.save(product);
     }
-    public Product getProductById(Long id){
-    return repository.findById(id).orElse(null);
-    
+
+    public Product getProductById(Long id) {
+        return repository.findById(id).orElse(null);
+
     }
+
     public Product updateProduct(Long id, Product updated) {
 
-    Product product = repository.findById(id).orElse(null);
+        Product product = repository.findById(id).orElse(null);
 
-    if(product == null) {
-        return null;
+        if (product == null) {
+            return null;
+        }
+
+        product.setName(updated.getName());
+        product.setCategory(updated.getCategory());
+        product.setDescription(updated.getDescription());
+        product.setPrice(updated.getPrice());
+        product.setStock(updated.getStock());
+        product.setStatus(updated.getStatus());
+
+        return repository.save(product);
     }
 
-    product.setName(updated.getName());
-    product.setCategory(updated.getCategory());
-    product.setDescription(updated.getDescription());
-    product.setPrice(updated.getPrice());
-    product.setStock(updated.getStock());
-    product.setStatus(updated.getStatus());
-
-    return repository.save(product);
-    }
     public void deleteProduct(Long id) {
-    repository.deleteById(id);
+        repository.deleteById(id);
+    }
+    @Transactional(readOnly = true)
+public List<Product> getLowStockProducts() {
+    return repository.findByStockLessThanEqualOrderByStockAsc(
+            InventoryConstants.LOW_STOCK_THRESHOLD
+    );
 }
 }

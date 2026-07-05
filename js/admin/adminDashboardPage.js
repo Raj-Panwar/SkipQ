@@ -10,6 +10,8 @@ import {
   updateOrderStatus,
   searchOrders
 } from "./adminApi.js";
+
+import { getLowStockProducts } from "./productApi.js";
 import { renderPagination } from "../shared/pagination.js";
 import { showToast } from "../shared/toast.js";
 const FILE_API = "http://localhost:8080/api/files";
@@ -25,6 +27,7 @@ const statTokensEl = document.getElementById("statActiveTokens");
 const statPrintEl = document.getElementById("statPendingPrint");
 const statRevenueEl = document.getElementById("statRevenue");
 
+const lowStockAlertsEl = document.getElementById("lowStockAlerts");
 // Table bodies
 const ordersTableBody = document.getElementById("ordersTableBody");
 const ordersPageInfo = document.getElementById("ordersPageInfo");
@@ -121,7 +124,54 @@ async function renderAll() {
 
 await loadOrders();
 
+await loadLowStockAlerts();
+
 renderPrintTable(stats.orders);
+}
+async function loadLowStockAlerts() {
+
+  try {
+
+    const products = await getLowStockProducts();
+
+    if (products.length === 0) {
+      lowStockAlertsEl.innerHTML = `
+    <div class="low-stock-empty">
+        🎉 All products are sufficiently stocked.
+    </div>
+`;
+      return;
+    }
+
+    lowStockAlertsEl.innerHTML = products
+      .map(product => {
+
+    const isOut = product.stockStatus === "OUT_OF_STOCK";
+
+    return `
+        <div class="low-stock-item ${isOut ? "low-stock-danger" : "low-stock-warning"}">
+
+            <div class="low-stock-info">
+                <div class="low-stock-name">${product.name}</div>
+                <div class="low-stock-count">
+                    ${isOut ? "Restock immediately" : `Only ${product.stock} units remaining`}
+                </div>
+            </div>
+
+            <span class="badge ${isOut ? "badge-cancelled" : "badge-warning"}">
+                ${isOut ? "Out of Stock" : "Low Stock"}
+            </span>
+
+        </div>
+    `;
+}).join("");
+
+  } catch (error) {
+
+    lowStockAlertsEl.innerHTML =
+      "<p>Unable to load low stock alerts.</p>";
+
+  }
 }
 async function loadOrders() {
 

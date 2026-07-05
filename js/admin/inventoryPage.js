@@ -9,8 +9,6 @@ import {
 import { showToast } from "../shared/toast.js";
 
 const ADMIN_SESSION_KEY = "skipq_admin_session";
-const LOW_STOCK_THRESHOLD = 10;
-
 if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
   window.location.href = "./login.html";
 }
@@ -19,10 +17,6 @@ const statTotalProducts  = document.getElementById("statTotalProducts");
 const statTotalStock     = document.getElementById("statTotalStock");
 const statOutOfStock     = document.getElementById("statOutOfStock");
 const statLowStock       = document.getElementById("statLowStock");
-
-const lowStockBanner     = document.getElementById("lowStockBanner");
-const lowStockBannerText = document.getElementById("lowStockBannerText");
-
 const productsTableBody  = document.getElementById("productsTableBody");
 const addProductBtn      = document.getElementById("addProductBtn");
 const logoutAdminBtn     = document.getElementById("logoutAdminBtn");
@@ -93,7 +87,6 @@ async function renderAll() {
     return;
   }
   renderStats(currentProducts);
-  renderLowStockBanner(currentProducts);
   renderProductsTable(currentProducts);
   setTableLoading(false);
 }
@@ -111,28 +104,19 @@ function setTableLoading(loading) {
 
 function renderStats(products) {
   statTotalProducts.textContent = String(products.length);
-  statTotalStock.textContent    = String(products.reduce((sum, p) => sum + (p.stock ?? 0), 0));
-  statOutOfStock.textContent    = String(products.filter((p) => p.stock === 0).length);
-  statLowStock.textContent      = String(products.filter((p) => p.stock > 0 && p.stock < LOW_STOCK_THRESHOLD).length);
-}
 
-function renderLowStockBanner(products) {
-  const concerning = products.filter(
-    (p) => p.stock === 0 || p.stock < LOW_STOCK_THRESHOLD
+  statTotalStock.textContent = String(
+    products.reduce((sum, p) => sum + (p.stock ?? 0), 0)
   );
 
-  if (concerning.length === 0) {
-    lowStockBanner.hidden = true;
-    return;
-  }
+  statOutOfStock.textContent = String(
+    products.filter((p) => p.stockStatus === "OUT_OF_STOCK").length
+  );
 
-  const names = concerning.slice(0, 3).map((p) => p.name).join(", ");
-  const extra = concerning.length > 3 ? ` and ${concerning.length - 3} more` : "";
-  lowStockBannerText.textContent =
-    `${concerning.length} product${concerning.length === 1 ? "" : "s"} need attention: ${names}${extra}.`;
-  lowStockBanner.hidden = false;
+  statLowStock.textContent = String(
+    products.filter((p) => p.stockStatus === "LOW_STOCK").length
+  );
 }
-
 /* ==========================================================
    Products table
 ========================================================== */
@@ -148,14 +132,38 @@ function renderProductsTable(products) {
 
 function buildProductRow(product) {
   const tr    = document.createElement("tr");
+  
   tr.dataset.productId = String(product.id);
+const stock = product.stock ?? 0;
+const stockStatus = product.stockStatus ?? "IN_STOCK";
+switch (stockStatus) {
+  case "OUT_OF_STOCK":
+    tr.classList.add("inventory-row-out");
+    break;
 
-  const stock      = product.stock ?? 0;
-  const isOut      = stock === 0;
-  const isLow      = stock > 0 && stock < LOW_STOCK_THRESHOLD;
-  const stockClass = isOut ? "stock-pill-out" : isLow ? "stock-pill-low" : "stock-pill-ok";
-  const stockLabel = isOut ? "Out of stock"   : isLow ? "Low stock"      : "In stock";
+  case "LOW_STOCK":
+    tr.classList.add("inventory-row-low");
+    break;
+}
 
+let stockClass;
+let stockLabel;
+
+switch (stockStatus) {
+  case "OUT_OF_STOCK":
+    stockClass = "stock-pill-out";
+    stockLabel = "Out of stock";
+    break;
+
+  case "LOW_STOCK":
+    stockClass = "stock-pill-low";
+    stockLabel = "Low stock";
+    break;
+
+  default:
+    stockClass = "stock-pill-ok";
+    stockLabel = "In stock";
+}
   const status      = product.status ?? "ACTIVE";
   const statusClass = status === "ACTIVE" ? "badge-ready" : "badge-cancelled";
   const statusLabel = status === "ACTIVE" ? "Active"      : "Inactive";

@@ -73,4 +73,17 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             WHERE o.status IN ('PLACED','PREPARING')
             """)
     long countActiveOrders();
+
+
+    @Query("""
+        SELECT o
+        FROM Order o
+        WHERE o.id = :orderId
+          AND o.student.id = :studentId
+        """)
+java.util.Optional<Order> findByIdAndStudentId(
+        @Param("orderId") Long orderId,
+        @Param("studentId") Long studentId);
+
+
 }

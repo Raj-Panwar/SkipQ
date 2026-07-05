@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your token — SkipQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/student.css">
 </head>
+
 <body class="app-body app-body-dark">
 
   <header class="app-header app-header-dark">
     <div class="app-header-row">
       <a href="./menu.html" class="back-link back-link-light" aria-label="Back to menu">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
       </a>
       <h1 class="page-title page-title-light">Your token</h1>
@@ -42,9 +47,15 @@
       </div>
 
       <p class="wait-estimate">
-        Estimated wait: <strong id="waitEstimate">18 min</strong> · Position <strong id="queuePosition">6</strong> in line
+        Estimated wait: <strong id="waitEstimate">18 min</strong> · Position <strong id="queuePosition">6</strong> in
+        line
       </p>
     </section>
+    <div class="token-actions">
+      <button type="button" id="cancelOrderBtn" class="btn btn-danger" hidden>
+        Cancel Order
+      </button>
+    </div>
 
     <section class="queue-timeline-card card">
       <p class="queue-timeline-label">Live queue timeline</p>
@@ -75,4 +86,5 @@
 
   <script type="module" src="../js/student/tokenPage.js"></script>
 </body>
+
 </html>

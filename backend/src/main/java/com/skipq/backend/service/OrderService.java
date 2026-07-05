@@ -1,11 +1,14 @@
 package com.skipq.backend.service;
 
 import com.skipq.backend.entity.Student;
+import com.skipq.backend.exception.OrderCancellationException;
 import com.skipq.backend.repository.StudentRepository;
 import com.skipq.backend.dto.CreateOrderItemRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import com.skipq.backend.exception.OrderCancellationException;
+import com.skipq.backend.exception.OrderNotFoundException;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
@@ -93,6 +96,43 @@ public class OrderService {
         notificationService.notifyStatusChange(saved, status);
 
         return saved;
+    }
+
+    @Transactional
+    public Order cancelOrder(Long orderId, Long studentId) {
+
+        Order order = orderRepository.findByIdAndStudentId(orderId, studentId)
+                .orElseThrow(() -> new OrderNotFoundException(
+                        "Order not found or does not belong to the student"));
+        if (!"PLACED".equals(order.getStatus())) {
+            throw new OrderCancellationException(
+                    "Only placed orders can be cancelled.");
+        }
+
+        // Restore Stock
+        for (OrderItem item : order.getItems()) {
+
+            if (!"stationery".equals(item.getItemType())) {
+                continue;
+            }
+
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Product not found: " + item.getProductId()));
+
+            product.setStock(
+                    product.getStock() + item.getQuantity());
+
+            productRepository.save(product);
+        }
+        order.setStatus("CANCELLED");
+
+        Order cancelledOrder = orderRepository.save(order);
+        notificationService.notifyStatusChange(
+                cancelledOrder,
+                "CANCELLED");
+
+        return cancelledOrder;
     }
 
     @Transactional
@@ -266,7 +306,6 @@ public class OrderService {
                 .where(OrderSpecifications.matchesQuery(query))
                 .and(OrderSpecifications.hasStatus(status))
                 .and(OrderSpecifications.createdOnDate(date));
-        System.out.println("query = " + query);
 
         Sort sortOrder = "oldest".equalsIgnoreCase(sort)
                 ? Sort.by("createdAt").ascending()
@@ -274,8 +313,6 @@ public class OrderService {
 
         Pageable pageable = PageRequest.of(page, size, sortOrder);
         Page<Order> result = orderRepository.findAll(spec, pageable);
-
-        System.out.println("Matched orders = " + result.getTotalElements());
 
         return orderRepository.findAll(spec, pageable);
     }

@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import com.skipq.backend.constants.InventoryConstants;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "products")
@@ -27,4 +29,17 @@ public class Product {
     private Integer stock;
 
     private String status;
+
+    @Transient
+    public StockStatus getStockStatus() {
+        if (stock == 0) {
+            return StockStatus.OUT_OF_STOCK;
+        }
+
+        if (stock <= InventoryConstants.LOW_STOCK_THRESHOLD) {
+            return StockStatus.LOW_STOCK;
+        }
+
+        return StockStatus.IN_STOCK;
+    }
 }

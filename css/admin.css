@@ -427,25 +427,7 @@
 /* ---------------------------------------------------------------------- */
 .stat-value-danger { color: var(--color-error); }
 
-/* ---------------------------------------------------------------------- */
-/* Low stock banner                                                        */
-/* ---------------------------------------------------------------------- */
-.low-stock-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background-color: #FFF3CD;
-  border: 1px solid rgba(244, 162, 97, 0.35);
-  border-radius: var(--radius-md);
-  color: #7A4F00;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
 
-.low-stock-banner svg {
-  flex-shrink: 0;
-}
 
 /* ---------------------------------------------------------------------- */
 /* Product cell in inventory table                                         */
@@ -701,4 +683,78 @@ select.input {
     font-size: 0.9rem;
     color: var(--color-muted);
     line-height: 1.5;
+}
+
+
+/* ==========================================================
+   Low Stock Alerts
+========================================================== */
+
+.low-stock-card{
+    padding:0;
+    overflow:hidden;
+}
+
+.low-stock-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 20px;
+    border-left:5px solid transparent;
+    transition:.2s;
+}
+
+.low-stock-item:not(:last-child){
+    border-bottom:1px solid var(--color-border);
+}
+
+.low-stock-item:hover{
+    transform:translateX(4px);
+}
+
+/* LOW STOCK */
+
+.low-stock-warning{
+    background:#fff7e6;
+    border-left-color:#f59e0b;
+}
+
+.low-stock-warning:hover{
+    background:#ffefcc;
+}
+
+/* OUT OF STOCK */
+
+.low-stock-danger{
+    background:#fdecec;
+    border-left-color:#dc2626;
+}
+
+.low-stock-danger:hover{
+    background:#f8d7da;
+}
+
+.low-stock-name{
+    font-weight:700;
+    font-size:15px;
+}
+
+.low-stock-count{
+    font-size:13px;
+    color:#666;
+    margin-top:2px;
+}
+
+.low-stock-empty{
+    padding:24px;
+    text-align:center;
+    color:#666;
+}
+/*======inventory low stock row=====*/
+.inventory-row-low {
+    background-color: #fff8e1;
+}
+
+.inventory-row-out {
+    background-color: #fdecea;
 }

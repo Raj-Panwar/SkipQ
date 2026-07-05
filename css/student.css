@@ -1714,3 +1714,10 @@
   font-size: 0.8rem;
   color: #6b7280;
 }
+
+
+
+.badge-cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}

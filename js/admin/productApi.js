@@ -47,3 +47,7 @@ export function deleteProduct(id) {
     method: "DELETE",
   });
 }
+
+export function getLowStockProducts() {
+  return request(`${BASE_URL}/low-stock`);
+}

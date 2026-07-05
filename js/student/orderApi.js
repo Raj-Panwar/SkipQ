@@ -39,28 +39,11 @@ export function getOrders() {
 }
 
 
-export async function getOrderById(id) {
-  const response = await fetch(
-    `http://localhost:8080/api/orders/${id}`
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to load order");
-  }
-
-  return response.json();
+export function getOrderById(id) {
+  return request(`${BASE_URL}/${id}`);
 }
-export async function getQueueInfo(id) {
-
-  const response = await fetch(
-      `http://localhost:8080/api/orders/${id}/queue`
-  );
-
-  if (!response.ok)
-      throw new Error("Failed to load queue");
-
-  return response.json();
-  
+export function getQueueInfo(id) {
+  return request(`${BASE_URL}/${id}/queue`);
 }
 export function getStudentOrders(studentId) {
   return request(`${BASE_URL}/student/${studentId}`);
@@ -90,4 +73,12 @@ export function searchOrders({
   params.append("size", size);
 
   return request(`${BASE_URL}/search?${params.toString()}`);
+}
+export function cancelOrder(orderId, studentId) {
+  return request(
+    `${BASE_URL}/${orderId}/cancel?studentId=${studentId}`,
+    {
+      method: "PUT",
+    }
+  );
 }

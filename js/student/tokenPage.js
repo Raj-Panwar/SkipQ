@@ -2,16 +2,21 @@
 import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
-import { getOrderById, getQueueInfo } from "./orderApi.js";
-const myTokenNumberEl   = document.getElementById("myTokenNumber");
-const statusBadge       = document.getElementById("statusBadge");
+import {
+  getOrderById,
+  getQueueInfo,
+  cancelOrder
+} from "./orderApi.js";
+const myTokenNumberEl = document.getElementById("myTokenNumber");
+const statusBadge = document.getElementById("statusBadge");
 const nowServingNumberEl = document.getElementById("nowServingNumber");
-const progressFill      = document.getElementById("progressFill");
-const waitEstimateEl    = document.getElementById("waitEstimate");
-const queuePositionEl   = document.getElementById("queuePosition");
-const tokenTimeline     = document.getElementById("tokenTimeline");
+const progressFill = document.getElementById("progressFill");
+const waitEstimateEl = document.getElementById("waitEstimate");
+const queuePositionEl = document.getElementById("queuePosition");
+const tokenTimeline = document.getElementById("tokenTimeline");
 const orderSummaryItems = document.getElementById("orderSummaryItems");
-const orderTotalEl      = document.getElementById("orderTotal");
+const orderTotalEl = document.getElementById("orderTotal");
+const cancelOrderBtn = document.getElementById("cancelOrderBtn");
 
 const DEV_MODE = true;
 if (!DEV_MODE && !isAuthenticated()) {
@@ -25,7 +30,7 @@ console.log(
   "Loaded Order:",
   JSON.parse(sessionStorage.getItem("skipq_latest_order"))
 );
-let myTokenValue    = parseTokenNumber(order.tokenNumber);
+let myTokenValue = parseTokenNumber(order.tokenNumber);
 let nowServingValue = myTokenValue;
 
 renderOrderSummary(order);
@@ -78,60 +83,63 @@ function renderOrderSummary(order) {
 
 function renderQueueState(queue) {
 
-    nowServingNumberEl.textContent = formatToken(queue.currentServing);
+  nowServingNumberEl.textContent = formatToken(queue.currentServing);
 
-    queuePositionEl.textContent = queue.peopleAhead;
+  queuePositionEl.textContent = queue.peopleAhead;
 
-    if (queue.estimatedWait == null) {
+  if (queue.estimatedWait == null) {
     waitEstimateEl.textContent = "Calculating...";
-} else if (queue.peopleAhead === 0) {
+  } else if (queue.peopleAhead === 0) {
     waitEstimateEl.textContent = "No waiting";
-} else {
+  } else {
     waitEstimateEl.textContent = `${queue.estimatedWait} min`;
-}
+  }
 
-    const progressPercent =
-        queue.peopleAhead === 0
-            ? 100
-            : Math.min(
-                95,
-                Math.round(
-                    (1 - queue.peopleAhead / (queue.peopleAhead + 4)) * 100
-                )
-            );
+  const progressPercent =
+    queue.peopleAhead === 0
+      ? 100
+      : Math.min(
+        95,
+        Math.round(
+          (1 - queue.peopleAhead / (queue.peopleAhead + 4)) * 100
+        )
+      );
 
-    progressFill.style.width = progressPercent + "%";
+  progressFill.style.width = progressPercent + "%";
 
-    updateStatusBadge(queue.status);
+  updateStatusBadge(queue.status);
 
-    rebuildTimeline(queue.peopleAhead);
+  rebuildTimeline(queue.peopleAhead);
 }
 async function loadQueue() {
-    try {
+  try {
 
-        const queue = await getQueueInfo(order.id);
+    const queue = await getQueueInfo(order.id);
 
-        myTokenValue = queue.tokenNumber;
-        nowServingValue = queue.currentServing;
+    myTokenValue = queue.tokenNumber;
+    nowServingValue = queue.currentServing;
 
-        renderQueueState(queue);
+    renderQueueState(queue);
 
-    } catch (err) {
-        console.error(err);
-    }
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 loadQueue();
 
 setInterval(loadQueue, 5000);
-
+cancelOrderBtn.addEventListener("click", handleCancelOrder);
 function updateStatusBadge(status) {
+  console.log("Current status:", status);
+  cancelOrderBtn.hidden = status !== "PLACED";
 
   statusBadge.classList.remove(
     "badge-placed",
     "badge-preparing",
     "badge-ready",
-    "badge-completed"
+    "badge-completed",
+    "badge-cancelled"
   );
 
   switch (status) {
@@ -149,6 +157,11 @@ function updateStatusBadge(status) {
     case "READY":
       statusBadge.textContent = "Ready For Pickup";
       statusBadge.classList.add("badge-ready");
+      break;
+
+    case "CANCELLED":
+      statusBadge.textContent = "Cancelled";
+      statusBadge.classList.add("badge-cancelled");
       break;
 
     case "COMPLETED":
@@ -189,7 +202,30 @@ function rebuildTimeline(queuePosition) {
     behavior: "smooth", inline: "center", block: "nearest"
   });
 }
+async function handleCancelOrder() {
 
+  const confirmed = confirm(
+    "Are you sure you want to cancel this order?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+
+    await cancelOrder(order.id, order.student.id);
+
+    alert("Order cancelled successfully.");
+
+    loadQueue();
+
+  } catch (err) {
+
+    alert(err.message);
+
+  }
+}
 /*function startSimulation() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
