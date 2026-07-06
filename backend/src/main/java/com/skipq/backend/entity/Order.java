@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-//import com.skipq.backend.entity.Student;
 
 @Entity
 @Table(name = "orders")
@@ -20,6 +19,9 @@ public class Order {
 
     @Column(name = "student_name", nullable = false)
     private String studentName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "college_id")
+    private College college;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -68,6 +70,14 @@ public class Order {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public College getCollege() {
+        return college;
+    }
+
+    public void setCollege(College college) {
+        this.college = college;
     }
 
     public LocalDateTime getPreparingAt() {

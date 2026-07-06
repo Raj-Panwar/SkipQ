@@ -8,6 +8,9 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import com.skipq.backend.constants.InventoryConstants;
 import jakarta.persistence.Transient;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name = "products")
@@ -23,12 +26,23 @@ public class Product {
     private String category;
 
     private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "college_id")
+    private College college;
 
     private Double price;
 
     private Integer stock;
 
     private String status;
+
+    public College getCollege() {
+        return college;
+    }
+
+    public void setCollege(College college) {
+        this.college = college;
+    }
 
     @Transient
     public StockStatus getStockStatus() {
