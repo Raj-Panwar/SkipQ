@@ -12,7 +12,6 @@ public interface CollegeRepository extends JpaRepository<College, Long> {
 
     boolean existsByCodeIgnoreCase(String code);
 
-    boolean existsByCode(String code);
-
+    
     List<College> findByActiveTrue();
 }

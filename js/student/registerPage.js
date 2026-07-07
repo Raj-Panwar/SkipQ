@@ -13,26 +13,27 @@ if (isAuthenticated()) {
   window.location.href = "./menu.html";
 }
 
-const form           = document.getElementById("registerForm");
-const fullNameInput  = document.getElementById("fullName");
-const emailInput     = document.getElementById("email");
-const phoneInput     = document.getElementById("phone");
-const passwordInput  = document.getElementById("password");
-const confirmInput   = document.getElementById("confirmPassword");
-const fullNameError  = document.getElementById("fullNameError");
-const emailError     = document.getElementById("emailError");
-const phoneError     = document.getElementById("phoneError");
-const passwordError  = document.getElementById("passwordError");
-const confirmError   = document.getElementById("confirmPasswordError");
-const formAlert      = document.getElementById("formAlert");
-const submitBtn      = document.getElementById("submitBtn");
+const form = document.getElementById("registerForm");
+const fullNameInput = document.getElementById("fullName");
+const emailInput = document.getElementById("email");
+const phoneInput = document.getElementById("phone");
+const passwordInput = document.getElementById("password");
+const confirmInput = document.getElementById("confirmPassword");
+const fullNameError = document.getElementById("fullNameError");
+const emailError = document.getElementById("emailError");
+const phoneError = document.getElementById("phoneError");
+const passwordError = document.getElementById("passwordError");
+const confirmError = document.getElementById("confirmPasswordError");
+const formAlert = document.getElementById("formAlert");
+const submitBtn = document.getElementById("submitBtn");
 const togglePassword = document.getElementById("togglePassword");
-const toggleConfirm  = document.getElementById("toggleConfirmPassword");
-const strengthMeter  = document.getElementById("strengthMeter");
-const strengthLabel  = document.getElementById("strengthLabel");
-
+const toggleConfirm = document.getElementById("toggleConfirmPassword");
+const strengthMeter = document.getElementById("strengthMeter");
+const strengthLabel = document.getElementById("strengthLabel");
+const collegeCodeInput = document.getElementById("collegeCode");
+const collegeCodeError = document.getElementById("collegeCodeError");
 togglePassword?.addEventListener("click", () => toggleVis(passwordInput, togglePassword));
-toggleConfirm?.addEventListener("click",  () => toggleVis(confirmInput,  toggleConfirm));
+toggleConfirm?.addEventListener("click", () => toggleVis(confirmInput, toggleConfirm));
 
 function toggleVis(input, btn) {
   const hidden = input.type === "password";
@@ -50,10 +51,12 @@ form.addEventListener("submit", async (e) => {
   clearErrors();
 
   const fullName = fullNameInput.value.trim();
-  const email    = emailInput.value.trim();
-  const phone    = phoneInput.value.trim();
+  const email = emailInput.value.trim();
+  const phone = phoneInput.value.trim();
+const collegeCode = collegeCodeInput.value.trim().toLowerCase();
   const password = passwordInput.value;
-  const confirm  = confirmInput.value;
+  const confirm = confirmInput.value;
+
 
   let valid = true;
 
@@ -62,6 +65,15 @@ form.addEventListener("submit", async (e) => {
   }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showFieldError(emailInput, emailError, "Enter a valid email address."); valid = false;
+  }
+  
+  if (!collegeCode) {
+    showFieldError(
+      collegeCodeInput,
+      collegeCodeError,
+      "College code is required."
+    );
+    valid = false;
   }
   if (!phone) {
     showFieldError(phoneInput, phoneError, "Phone number is required."); valid = false;
@@ -81,7 +93,8 @@ form.addEventListener("submit", async (e) => {
     await registerStudent({
       fullName,
       email,
-      phoneNumber: phone,  // backend field name is phoneNumber
+      phoneNumber: phone,
+      collegeCode,
       password,
     });
 
@@ -105,9 +118,24 @@ function showFieldError(input, el, msg) {
 }
 
 function clearErrors() {
-  [fullNameInput, emailInput, phoneInput, passwordInput, confirmInput]
+  [
+    fullNameInput,
+    emailInput,
+    collegeCodeInput,
+    phoneInput,
+    passwordInput,
+    confirmInput
+  ]
     .filter(Boolean).forEach((i) => i.classList.remove("is-invalid"));
-  [fullNameError, emailError, phoneError, passwordError, confirmError, formAlert]
+  [
+    fullNameError,
+    emailError,
+    collegeCodeError,
+    phoneError,
+    passwordError,
+    confirmError,
+    formAlert
+  ]
     .filter(Boolean).forEach((el) => { el.hidden = true; });
 }
 
@@ -122,13 +150,13 @@ function updateStrength(value) {
   if (value.length >= 6) score++;
   if (value.length >= 10 && /[0-9]/.test(value) && /[a-zA-Z]/.test(value)) score++;
   if (/[A-Z]/.test(value) && /[a-z]/.test(value) && /[^a-zA-Z0-9]/.test(value)) score++;
-  const labels  = ["", "Weak", "Okay", "Strong"];
+  const labels = ["", "Weak", "Okay", "Strong"];
   const classes = ["", "is-weak", "is-okay", "is-strong"];
   strengthMeter.querySelectorAll(".strength-bar").forEach((bar, i) => {
     bar.classList.remove("is-weak", "is-okay", "is-strong");
     if (i < score) bar.classList.add(classes[score]);
   });
   strengthLabel.textContent = labels[score];
-  strengthLabel.className   = "strength-label";
+  strengthLabel.className = "strength-label";
   if (score > 0) strengthLabel.classList.add(classes[score].replace("is-", "text-"));
 }

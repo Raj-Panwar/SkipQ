@@ -121,8 +121,8 @@ async function loadQueue() {
 
     renderQueueState(queue);
     if (queue.status === "CANCELLED") {
-    clearInterval(queueRefreshInterval);
-}
+      clearInterval(queueRefreshInterval);
+    }
 
   } catch (err) {
     console.error(err);
@@ -222,17 +222,22 @@ async function handleCancelOrder() {
     cancelOrderBtn.disabled = true;
     cancelOrderBtn.textContent = "Cancelling...";
 
-    await cancelOrder(order.id, order.student.id);
+    const student = JSON.parse(
+      sessionStorage.getItem("skipq_student")
+    );
+
+    await cancelOrder(order.id, student.id);
++
 
     await loadQueue();
 
   } catch (err) {
 
-  cancelOrderBtn.disabled = false;
-  cancelOrderBtn.textContent = "Cancel Order";
+    cancelOrderBtn.disabled = false;
+    cancelOrderBtn.textContent = "Cancel Order";
 
-  alert(err.message);
-}
+    alert(err.message);
+  }
 }
 /*function startSimulation() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

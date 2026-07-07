@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login — SkipQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
+
 <body class="admin-auth-body">
 
   <div class="admin-auth-screen">
@@ -18,9 +22,10 @@
     <div class="admin-auth-brand">
       <span class="admin-brand-mark">
         <svg viewBox="0 0 40 40" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3"/>
-          <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="29" cy="29" r="4.5" fill="currentColor"/>
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" />
+          <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <circle cx="29" cy="29" r="4.5" fill="currentColor" />
         </svg>
       </span>
       <div>
@@ -38,29 +43,29 @@
       <div id="formAlert" class="alert alert-error" role="alert" hidden></div>
 
       <form id="adminLoginForm" class="form" novalidate>
+        <div class="form-group">
+          <label for="collegeCode">College Code</label>
+          <input type="text" id="collegeCode" name="collegeCode" class="input" placeholder="e.g. GLB202"
+            autocomplete="off" required />
+          <p class="field-error" id="collegeCodeError" hidden></p>
+        </div>
 
         <div class="form-group">
           <label for="email">Admin email</label>
-          <input type="email" id="email" name="email" class="input"
-            placeholder="admin@skipq.in" autocomplete="email" required inputmode="email">
+          <input type="email" id="email" name="email" class="input" placeholder="admin@skipq.in" autocomplete="email"
+            required inputmode="email">
           <p class="field-error" id="emailError" hidden></p>
         </div>
 
         <div class="form-group">
           <label for="password">Password</label>
           <div class="input-with-action">
-            <input type="password" id="password" name="password" class="input"
-              placeholder="Enter password" autocomplete="current-password" required>
-            <button type="button" class="input-action" id="togglePassword"
-              aria-label="Show password" aria-pressed="false">Show</button>
+            <input type="password" id="password" name="password" class="input" placeholder="Enter password"
+              autocomplete="current-password" required>
+            <button type="button" class="input-action" id="togglePassword" aria-label="Show password"
+              aria-pressed="false">Show</button>
           </div>
           <p class="field-error" id="passwordError" hidden></p>
-        </div>
-
-        <div class="admin-hint card">
-          <span class="admin-hint-label">Demo credentials</span>
-          <span>Email: <code>admin@skipq.in</code></span>
-          <span>Password: <code>admin123</code></span>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
@@ -78,4 +83,5 @@
 
   <script type="module" src="../js/admin/adminLoginPage.js"></script>
 </body>
+
 </html>

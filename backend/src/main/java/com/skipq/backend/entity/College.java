@@ -8,12 +8,9 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "college",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "code")
-        }
-)
+@Table(name = "college", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "code")
+})
 public class College {
 
     @Id

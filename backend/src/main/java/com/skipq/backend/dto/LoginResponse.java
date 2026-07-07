@@ -11,6 +11,7 @@ public class LoginResponse {
     private Long id;
     private String fullName;
     private String email;
+    private String collegeCode;
     private String phoneNumber;
 
     public LoginResponse() {}
@@ -21,6 +22,7 @@ public class LoginResponse {
         res.id          = student.getId();
         res.fullName    = student.getFullName();
         res.email       = student.getEmail();
+        res.collegeCode = student.getCollege().getCode();
         res.phoneNumber = student.getPhoneNumber();
         return res;
     }
@@ -28,5 +30,8 @@ public class LoginResponse {
     public Long getId() { return id; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
+    public String getCollegeCode() {
+    return collegeCode;
+}
     public String getPhoneNumber() { return phoneNumber; }
 }

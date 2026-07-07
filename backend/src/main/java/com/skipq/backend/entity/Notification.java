@@ -48,6 +48,7 @@ public class Notification {
             String message) {
         this.student = student;
         this.order = order;
+        this.college = order.getCollege();
 
         this.type = type;
         this.message = message;
@@ -106,7 +107,7 @@ public class Notification {
     }
 
     public void setRead(boolean read) {
-        read = read;
+        this.read = read;
     }
 
     public LocalDateTime getCreatedAt() {

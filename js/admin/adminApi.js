@@ -3,10 +3,16 @@
 const ORDERS_URL = "http://localhost:8080/api/orders";
 
 async function request(url, options = {}) {
+  const admin = JSON.parse(sessionStorage.getItem("skipq_admin"));
+
   let response;
+
   try {
     response = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(admin ? { "X-Admin-Id": admin.id } : {}),
+      },
       ...options,
     });
   } catch (_networkError) {

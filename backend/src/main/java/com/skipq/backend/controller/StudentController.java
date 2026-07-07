@@ -2,7 +2,7 @@ package com.skipq.backend.controller;
 
 import com.skipq.backend.dto.LoginRequest;
 import com.skipq.backend.dto.LoginResponse;
-import com.skipq.backend.dto.RegisterRequest;
+import com.skipq.backend.dto.student.RegisterRequest;
 import com.skipq.backend.service.StudentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

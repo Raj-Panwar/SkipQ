@@ -2,29 +2,36 @@ package com.skipq.backend.service;
 
 import com.skipq.backend.dto.LoginRequest;
 import com.skipq.backend.dto.LoginResponse;
-import com.skipq.backend.dto.RegisterRequest;
+import com.skipq.backend.dto.student.RegisterRequest;
 import com.skipq.backend.entity.Student;
 import com.skipq.backend.repository.StudentRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.skipq.backend.entity.College;
+import com.skipq.backend.repository.CollegeRepository;
 
 @Service
 public class StudentService {
 
     private final StudentRepository studentRepository;
+    private final CollegeRepository collegeRepository;
 
     // Declared as a field so there is exactly one BCryptPasswordEncoder
     // instance for the lifetime of this bean — no need to expose it as
     // a Spring @Bean since only this service uses it.
     private final PasswordEncoder passwordEncoder;
-    public StudentService(StudentRepository studentRepository, PasswordEncoder passwordEncoder) { 
-        this.studentRepository = studentRepository; 
-        this.passwordEncoder = passwordEncoder; 
-    }
 
-    
+    public StudentService(
+            StudentRepository studentRepository,
+            CollegeRepository collegeRepository,
+            PasswordEncoder passwordEncoder) {
+
+        this.studentRepository = studentRepository;
+        this.collegeRepository = collegeRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * Registers a new student.
@@ -47,12 +54,17 @@ public class StudentService {
             throw new IllegalArgumentException(
                     "An account with this phone number already exists.");
         }
+        College college = collegeRepository
+                .findByCodeIgnoreCase(request.getCollegeCode().trim().toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid college code."));
 
         Student student = new Student();
+
         student.setFullName(request.getFullName().trim());
         student.setEmail(request.getEmail().trim().toLowerCase());
         student.setPhoneNumber(request.getPhoneNumber().trim());
         student.setPassword(passwordEncoder.encode(request.getPassword()));
+        student.setCollege(college);
 
         Student saved = studentRepository.save(student);
         return LoginResponse.from(saved);
@@ -71,8 +83,14 @@ public class StudentService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
 
+        College college = collegeRepository
+                .findByCodeIgnoreCase(request.getCollegeCode().trim().toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid college code."));
+
         Student student = studentRepository
-                .findByEmail(request.getEmail().trim().toLowerCase())
+                .findByEmailAndCollege(
+                        request.getEmail().trim().toLowerCase(),
+                        college)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Invalid email or password."));
 

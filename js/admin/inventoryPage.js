@@ -8,7 +8,7 @@ import {
 } from "./productApi.js";
 import { showToast } from "../shared/toast.js";
 
-const ADMIN_SESSION_KEY = "skipq_admin_session";
+const ADMIN_SESSION_KEY = "skipq_admin";
 if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
   window.location.href = "./login.html";
 }

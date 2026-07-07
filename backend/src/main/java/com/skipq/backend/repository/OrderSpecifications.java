@@ -61,4 +61,17 @@ public class OrderSpecifications {
             return cb.between(root.get("createdAt"), startOfDay, endOfDay);
         };
     }
+    public static Specification<Order> belongsToCollege(Long collegeId) {
+    return (root, query, cb) -> {
+
+        if (collegeId == null) {
+            return cb.conjunction();
+        }
+
+        return cb.equal(
+                root.get("college").get("id"),
+                collegeId
+        );
+    };
+}
 }

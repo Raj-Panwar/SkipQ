@@ -1,21 +1,21 @@
-package com.skipq.backend.dto;
+package com.skipq.backend.dto.admin;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public class LoginRequest {
+public class AdminLoginRequest {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Enter a valid email address")
+    @NotBlank
+    @Email
     private String email;
-    @NotBlank(message = "College code is required")
-    private String collegeCode;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank
+    @Size(min = 6)
     private String password;
 
-    public LoginRequest() {
-    }
+    @NotBlank
+    private String collegeCode;;
 
     public String getEmail() {
         return email;

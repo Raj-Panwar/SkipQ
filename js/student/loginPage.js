@@ -16,6 +16,8 @@ const passwordError = document.getElementById("passwordError");
 const formAlert = document.getElementById("formAlert");
 const submitBtn = document.getElementById("submitBtn");
 const togglePasswordBtn = document.getElementById("togglePassword");
+const collegeCodeInput = document.getElementById("collegeCode");
+const collegeCodeError = document.getElementById("collegeCodeError");
 
 // If the student is already logged in, skip straight to the menu.
 if (isLoggedIn()) {
@@ -38,8 +40,10 @@ form.addEventListener("submit", async (event) => {
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const collegeCode = collegeCodeInput.value.trim().toLowerCase();
+  
 
-  const isValid = validateForm(email, password);
+const isValid = validateForm(collegeCode, email, password);
   if (!isValid) return;
 
   setLoading(true);
@@ -47,15 +51,16 @@ form.addEventListener("submit", async (event) => {
   try {
     console.log("Login button clicked");
     const student = await loginStudent({
-    email,
-    password
-});
+      collegeCode,
+      email,
+      password
+    });
 
-setSession(student);
+    setSession(student);
 
-window.location.href = "./menu.html";
+    window.location.href = "./menu.html";
   } catch (error) {
-   showAlert(error.message || "Login failed. Please try again.");
+    showAlert(error.message || "Login failed. Please try again.");
   } finally {
     setLoading(false);
   }
@@ -66,8 +71,21 @@ window.location.href = "./menu.html";
  * @param {string} password
  * @returns {boolean} true if both fields pass validation
  */
-function validateForm(email, password) {
+
+function validateForm(collegeCode, email, password) {
+
   let valid = true;
+
+  if (!collegeCode) {
+    showFieldError(
+      collegeCodeInput,
+      collegeCodeError,
+      "College code is required."
+    );
+    valid = false;
+  } else {
+    clearFieldError(collegeCodeInput, collegeCodeError);
+  }
 
   if (!isValidEmail(email)) {
     showFieldError(emailInput, emailError, "Enter a valid email address.");
@@ -85,7 +103,6 @@ function validateForm(email, password) {
 
   return valid;
 }
-
 function showFieldError(input, errorEl, message) {
   input.classList.add("is-invalid");
   errorEl.textContent = message;

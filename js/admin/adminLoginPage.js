@@ -6,10 +6,9 @@
 
 import { showToast } from "../shared/toast.js";
 import { isValidEmail, isValidPassword } from "../utils/validators.js";
+import { loginAdmin } from "./adminAuthApi.js";
 
-const ADMIN_EMAIL = "admin@skipq.in";
-const ADMIN_PASSWORD = "admin123";
-const ADMIN_SESSION_KEY = "skipq_admin_session";
+const ADMIN_SESSION_KEY = "skipq_admin";
 
 const form = document.getElementById("adminLoginForm");
 const emailInput = document.getElementById("email");
@@ -19,7 +18,11 @@ const passwordError = document.getElementById("passwordError");
 const formAlert = document.getElementById("formAlert");
 const submitBtn = document.getElementById("submitBtn");
 const togglePasswordBtn = document.getElementById("togglePassword");
+const collegeCodeInput =
+  document.getElementById("collegeCode");
 
+const collegeCodeError =
+  document.getElementById("collegeCodeError");
 // Already logged in as admin — skip to dashboard.
 if (sessionStorage.getItem(ADMIN_SESSION_KEY)) {
   window.location.href = "./dashboard.html";
@@ -36,31 +39,75 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   hideAlert();
 
+  const collegeCode = collegeCodeInput.value.trim();
+
   const email = emailInput.value.trim();
+
   const password = passwordInput.value;
 
-  if (!validate(email, password)) return;
+  if (!validate(collegeCode, email, password)) return;
 
   setLoading(true);
 
-  // Simulate async credential check (replace with API call in Phase 2)
-  await delay(500);
 
-  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+
+  try {
+
+    const admin = await loginAdmin({
+
+      collegeCode,
+
+      email,
+
+      password
+
+    });
+
     sessionStorage.setItem(
       ADMIN_SESSION_KEY,
-      JSON.stringify({ email, role: "ADMIN", loginAt: new Date().toISOString() })
+      JSON.stringify(admin)
     );
-    showToast("Welcome back, Admin", "success");
-    setTimeout(() => { window.location.href = "./dashboard.html"; }, 700);
-  } else {
-    showAlert("Incorrect email or password.");
+
+    showToast(
+      `Welcome back, ${admin.fullName}`,
+      "success"
+    );
+
+    setTimeout(() => {
+      window.location.href = "./dashboard.html";
+    }, 700);
+
+  } catch (err) {
+
+    showAlert(
+    err.message || "Login failed. Please try again."
+);
+
     setLoading(false);
-  }
+
+}
 });
 
-function validate(email, password) {
+function validate(collegeCode, email, password) {
   let valid = true;
+  if (!collegeCode) {
+
+    showFieldError(
+      collegeCodeInput,
+      collegeCodeError,
+      "Enter college code."
+    );
+
+    valid = false;
+
+  } else {
+
+    clearFieldError(
+      collegeCodeInput,
+      collegeCodeError
+    );
+
+  }
 
   if (!isValidEmail(email)) {
     showFieldError(emailInput, emailError, "Enter a valid email address.");
@@ -100,6 +147,3 @@ function setLoading(on) {
   submitBtn.classList.toggle("is-loading", on);
 }
 
-function delay(ms) {
-  return new Promise((res) => setTimeout(res, ms));
-}

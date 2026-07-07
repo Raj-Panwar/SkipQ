@@ -2,7 +2,7 @@ package com.skipq.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @Table(name = "students")
 public class Student {
@@ -30,7 +30,7 @@ public class Student {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
-
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "college_id")
     private College college;

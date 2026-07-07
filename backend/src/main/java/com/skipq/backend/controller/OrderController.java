@@ -1,11 +1,14 @@
 package com.skipq.backend.controller;
 
+import com.skipq.backend.service.AdminService;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.service.OrderService;
 import com.skipq.backend.exception.OrderNotFoundException;
 import com.skipq.backend.dto.WaitEstimateDTO;
+import com.skipq.backend.dto.order.OrderResponse;
+import com.skipq.backend.dto.order.OrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,22 +24,34 @@ import java.util.List;
 @RequestMapping("/api/orders")
 @CrossOrigin("*")
 public class OrderController {
+    private final AdminService adminService;
 
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+    public OrderController(OrderService orderService,
+                       AdminService adminService) {
+    this.orderService = orderService;
+    this.adminService = adminService;
+}
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Order> updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
+public ResponseEntity<OrderResponse> updateStatus(
 
-        Order updatedOrder = orderService.updateStatus(id, status);
+        @RequestHeader("X-Admin-Id") Long adminId,
 
-        return ResponseEntity.ok(updatedOrder);
-    }
+        @PathVariable Long id,
+
+        @RequestParam String status) {
+
+    Long collegeId = adminService
+            .getById(adminId)
+            .getCollege()
+            .getId();
+
+    OrderResponse updatedOrder = orderService.updateStatus(id, collegeId, status);
+
+    return ResponseEntity.ok(updatedOrder);
+}
 
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(
@@ -45,7 +60,7 @@ public class OrderController {
 
         try {
 
-            Order cancelledOrder = orderService.cancelOrder(id, studentId);
+            OrderResponse cancelledOrder = orderService.cancelOrder(id, studentId);
 
             return ResponseEntity.ok(cancelledOrder);
 
@@ -64,16 +79,16 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request) {
 
-        Order order = orderService.createOrder(request);
+        OrderResponse order = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @GetMapping
-    public List<Order> getAllOrders() {
-        return orderService.getAllOrders();
+    public List<OrderResponse> getAllOrders() {
+        return orderService.getAllOrders(null);
     }
 
     @GetMapping("/wait-estimate")
@@ -82,7 +97,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id:\\d+}")
-    public Order getOrderById(@PathVariable Long id) {
+    public OrderResponse getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
     }
 
@@ -92,7 +107,7 @@ public class OrderController {
     }
 
     @GetMapping("/student/{studentId}")
-    public List<Order> getStudentOrders(@PathVariable Long studentId) {
+    public List<OrderResponse> getStudentOrders(@PathVariable Long studentId) {
         return orderService.getOrdersByStudent(studentId);
     }
 
@@ -104,16 +119,32 @@ public class OrderController {
     }
 
     @GetMapping("/search")
-    public Page<Order> searchOrders(
-            @RequestParam(required = false) String query,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(defaultValue = "newest") String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        System.out.println("Query = " + query);
+public Page<OrderResponse> searchOrders(
 
-        return orderService.searchOrders(query, status, date, sort, page, size);
-    }
+        @RequestHeader("X-Admin-Id") Long adminId,
 
+        @RequestParam(required = false) String query,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate date,
+
+        @RequestParam(defaultValue = "newest") String sort,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size) {
+
+    Long collegeId = adminService
+            .getById(adminId)
+            .getCollege()
+            .getId();
+
+    return orderService.searchOrders(
+            collegeId,
+            query,
+            status,
+            date,
+            sort,
+            page,
+            size);
+}
 }

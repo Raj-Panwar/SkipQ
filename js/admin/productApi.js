@@ -3,18 +3,44 @@
 const BASE_URL = "http://localhost:8080/api/products";
 
 async function request(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+
+  const admin = JSON.parse(
+    sessionStorage.getItem("skipq_admin")
+  );
+
+  let response;
+
+  try {
+
+    response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(admin ? { "X-Admin-Id": admin.id } : {})
+      },
+      ...options,
+    });
+
+  } catch (_networkError) {
+
+    throw new Error(
+      "Unable to reach the server. Check your connection."
+    );
+
+  }
 
   if (response.status === 204) return null;
 
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message = data?.message || data?.error || `Request failed (${response.status})`;
+
+    const message =
+      data?.message ||
+      data?.error ||
+      `Request failed (${response.status})`;
+
     throw new Error(message);
+
   }
 
   return data;

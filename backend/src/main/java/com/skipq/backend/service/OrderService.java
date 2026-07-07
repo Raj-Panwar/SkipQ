@@ -28,6 +28,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.skipq.backend.mapper.OrderMapper;
+import com.skipq.backend.dto.order.OrderResponse;
 
 @Service
 public class OrderService {
@@ -37,33 +39,39 @@ public class OrderService {
     private final StudentRepository studentRepository;
     private final NotificationService notificationService;
     private final WaitTimeService waitTimeService;
+    private final OrderMapper orderMapper;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
             StudentRepository studentRepository,
             NotificationService notificationService,
-            WaitTimeService waitTimeService) {
+            WaitTimeService waitTimeService,
+            OrderMapper orderMapper) {
 
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.studentRepository = studentRepository;
         this.notificationService = notificationService;
         this.waitTimeService = waitTimeService;
+        this.orderMapper = orderMapper;
 
     }
 
     @Transactional
-    public Order updateStatus(Long id, String status) {
+    public OrderResponse updateStatus(Long id,
+            Long collegeId,
+            String status) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+        Order order = orderRepository
+                .findByIdAndCollegeId(id, collegeId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
         String previousStatus = order.getStatus();
 
         // Prevent duplicate updates and notifications
         if (status.equals(previousStatus)) {
-            return order;
+            return orderMapper.toResponse(order);
         }
 
         order.setStatus(status);
@@ -95,11 +103,11 @@ public class OrderService {
 
         notificationService.notifyStatusChange(saved, status);
 
-        return saved;
+        return orderMapper.toResponse(saved);
     }
 
     @Transactional
-    public Order cancelOrder(Long orderId, Long studentId) {
+    public OrderResponse cancelOrder(Long orderId, Long studentId) {
 
         Order order = orderRepository.findByIdAndStudentId(orderId, studentId)
                 .orElseThrow(() -> new OrderNotFoundException(
@@ -132,11 +140,11 @@ public class OrderService {
                 cancelledOrder,
                 "CANCELLED");
 
-        return cancelledOrder;
+        return orderMapper.toResponse(cancelledOrder);
     }
 
     @Transactional
-    public Order createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request) {
 
         Order order = new Order();
 
@@ -146,6 +154,7 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
             order.setStudent(student);
+            order.setCollege(student.getCollege());
 
             order.setStudentName(student.getFullName());
 
@@ -227,26 +236,34 @@ public class OrderService {
 
         // 7. Set total and save Order — CascadeType.ALL saves OrderItems too
         order.setTotalAmount(totalAmount);
-        return orderRepository.save(order);
 
+        Order saved = orderRepository.save(order);
+
+        return orderMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<Order> getAllOrders() {
-        return orderRepository.findAllByOrderByCreatedAtDesc();
+    public List<OrderResponse> getAllOrders(Long collegeId) {
+        return orderRepository
+        .findAllByCollegeIdOrderByCreatedAtDesc(collegeId)
+        .stream()
+        .map(orderMapper::toResponse)
+        .toList();
     }
 
     @Transactional(readOnly = true)
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Order not found with id: " + id));
+    public OrderResponse getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException(
+                "Order not found with id: " + id));
+
+return orderMapper.toResponse(order);
     }
 
     @Transactional(readOnly = true)
     public QueueInfoDTO getQueueInfo(Long orderId) {
 
-        Order order = getOrderById(orderId);
+        OrderResponse order = getOrderById(orderId);
 
         Integer currentServing = orderRepository.findCurrentServingToken();
 
@@ -294,26 +311,37 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<Order> getOrdersByStudent(Long studentId) {
+    public List<OrderResponse> getOrdersByStudent(Long studentId) {
 
-        return orderRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+        return orderRepository
+        .findByStudentIdOrderByCreatedAtDesc(studentId)
+        .stream()
+        .map(orderMapper::toResponse)
+        .toList();
     }
 
     @Transactional(readOnly = true)
-    public Page<Order> searchOrders(String query, String status, LocalDate date,
-            String sort, int page, int size) {
+    public Page<OrderResponse> searchOrders(
+            Long collegeId,
+            String query,
+            String status,
+            LocalDate date,
+            String sort,
+            int page,
+            int size) {
         Specification<Order> spec = Specification
-                .where(OrderSpecifications.matchesQuery(query))
+                .where(OrderSpecifications.belongsToCollege(collegeId))
+                .and(OrderSpecifications.matchesQuery(query))
                 .and(OrderSpecifications.hasStatus(status))
                 .and(OrderSpecifications.createdOnDate(date));
-
         Sort sortOrder = "oldest".equalsIgnoreCase(sort)
                 ? Sort.by("createdAt").ascending()
                 : Sort.by("createdAt").descending();
 
         Pageable pageable = PageRequest.of(page, size, sortOrder);
-        Page<Order> result = orderRepository.findAll(spec, pageable);
 
-        return orderRepository.findAll(spec, pageable);
+        return orderRepository
+                .findAll(spec, pageable)
+                .map(orderMapper::toResponse);
     }
 }

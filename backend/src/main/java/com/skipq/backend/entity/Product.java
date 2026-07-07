@@ -11,6 +11,7 @@ import jakarta.persistence.Transient;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "products")
@@ -27,8 +28,9 @@ public class Product {
 
     private String description;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "college_id")
-    private College college;
+@JoinColumn(name = "college_id")
+@JsonIgnore
+private College college;
 
     private Double price;
 

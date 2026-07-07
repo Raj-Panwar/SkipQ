@@ -15,7 +15,7 @@ import { getLowStockProducts } from "./productApi.js";
 import { renderPagination } from "../shared/pagination.js";
 import { showToast } from "../shared/toast.js";
 const FILE_API = "http://localhost:8080/api/files";
-const ADMIN_SESSION_KEY = "skipq_admin_session";
+const ADMIN_SESSION_KEY = "skipq_admin";
 
 if (!sessionStorage.getItem(ADMIN_SESSION_KEY)) {
   window.location.href = "./login.html";
