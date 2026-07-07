@@ -9,4 +9,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByStockLessThanEqualOrderByStockAsc(int threshold);
 
     List<Product> findByCollege(College college);
+
+    List<Product> findByCollegeAndStockLessThanEqualOrderByStockAsc(
+        College college,
+        Integer stock);
 }

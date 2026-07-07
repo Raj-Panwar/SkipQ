@@ -1,6 +1,7 @@
 package com.skipq.backend.service;
 
 import com.skipq.backend.entity.Student;
+import com.skipq.backend.exception.NoActiveOrderException;
 import com.skipq.backend.exception.OrderCancellationException;
 import com.skipq.backend.repository.StudentRepository;
 import com.skipq.backend.dto.CreateOrderItemRequest;
@@ -230,8 +231,11 @@ public class OrderService {
                 productRepository.save(product);
             }
         }
-        // 6. Generate token
-        Integer lastToken = orderRepository.findMaxTokenNumber();
+        // 6. Generate college-specific token
+        Long collegeId = order.getCollege().getId();
+
+        Integer lastToken = orderRepository.findMaxTokenNumberByCollegeId(collegeId);
+
         order.setTokenNumber(lastToken + 1);
 
         // 7. Set total and save Order — CascadeType.ALL saves OrderItems too
@@ -245,33 +249,38 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders(Long collegeId) {
         return orderRepository
-        .findAllByCollegeIdOrderByCreatedAtDesc(collegeId)
-        .stream()
-        .map(orderMapper::toResponse)
-        .toList();
+                .findAllByCollegeIdOrderByCreatedAtDesc(collegeId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException(
-                "Order not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException(
+                        "Order not found with id: " + id));
 
-return orderMapper.toResponse(order);
+        return orderMapper.toResponse(order);
     }
 
     @Transactional(readOnly = true)
     public QueueInfoDTO getQueueInfo(Long orderId) {
 
-        OrderResponse order = getOrderById(orderId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        Integer currentServing = orderRepository.findCurrentServingToken();
+        Long collegeId = order.getCollege().getId();
+
+        Integer currentServing = orderRepository.findCurrentServingTokenByCollegeId(collegeId);
 
         if (currentServing == null) {
             currentServing = order.getTokenNumber();
         }
 
-        int peopleAhead = (int) orderRepository.countPeopleAhead(order.getTokenNumber());
+        int peopleAhead = (int) orderRepository.countPeopleAheadByCollegeId(
+                collegeId,
+                order.getTokenNumber());
 
         Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
 
@@ -288,9 +297,14 @@ return orderMapper.toResponse(order);
     }
 
     @Transactional(readOnly = true)
-    public WaitEstimateDTO getCurrentWaitEstimate() {
+    public WaitEstimateDTO getCurrentWaitEstimate(Long studentId) {
 
-        long ordersAhead = orderRepository.countActiveOrders();
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        Long collegeId = student.getCollege().getId();
+
+        long ordersAhead = orderRepository.countActiveOrdersByCollegeId(collegeId);
 
         Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
 
@@ -304,21 +318,38 @@ return orderMapper.toResponse(order);
     }
 
     @Transactional(readOnly = true)
-    public Integer getCurrentServingToken() {
+    public Integer getCurrentServingToken(Long studentId) {
 
-        return orderRepository.findCurrentServingToken();
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
+        Long collegeId = student.getCollege().getId();
+
+        return orderRepository.findCurrentServingTokenByCollegeId(collegeId);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByStudent(Long studentId) {
 
         return orderRepository
-        .findByStudentIdOrderByCreatedAtDesc(studentId)
-        .stream()
-        .map(orderMapper::toResponse)
-        .toList();
+                .findByStudentIdOrderByCreatedAtDesc(studentId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
     }
+
+    @Transactional(readOnly = true)
+public OrderResponse getActiveOrder(Long studentId) {
+
+    List<Order> activeOrders =
+            orderRepository.findActiveOrdersByStudentId(studentId);
+
+    if (activeOrders.isEmpty()) {
+        throw new NoActiveOrderException("No active order found.");
+    }
+
+    return orderMapper.toResponse(activeOrders.get(0));
+}
 
     @Transactional(readOnly = true)
     public Page<OrderResponse> searchOrders(

@@ -32,9 +32,16 @@ public class ProductController {
     }
 
     @GetMapping("/low-stock")
-    public List<Product> getLowStockProducts() {
-        return service.getLowStockProducts();
-    }
+public List<Product> getLowStockProducts(
+        @RequestHeader("X-Admin-Id") Long adminId) {
+
+    Long collegeId = adminService
+            .getById(adminId)
+            .getCollege()
+            .getId();
+
+    return service.getLowStockProducts(collegeId);
+}
 
     @GetMapping("/{id}")
     public Product getProduct(
@@ -95,5 +102,12 @@ public class ProductController {
 
         service.deleteProduct(id, collegeId);
     }
+    @GetMapping("/student/{id}")
+public Product getStudentProduct(
+        @PathVariable Long id,
+        @RequestParam String collegeCode) {
+
+    return service.getProductByIdForCollegeCode(id, collegeCode);
+}
 
 }

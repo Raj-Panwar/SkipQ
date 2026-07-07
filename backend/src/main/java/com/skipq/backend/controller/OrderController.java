@@ -15,6 +15,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.skipq.backend.exception.NoActiveOrderException;
 import com.skipq.backend.exception.OrderCancellationException;
 import java.util.Map;
 import java.time.LocalDate;
@@ -29,29 +31,29 @@ public class OrderController {
     private final OrderService orderService;
 
     public OrderController(OrderService orderService,
-                       AdminService adminService) {
-    this.orderService = orderService;
-    this.adminService = adminService;
-}
+            AdminService adminService) {
+        this.orderService = orderService;
+        this.adminService = adminService;
+    }
 
     @PatchMapping("/{id}/status")
-public ResponseEntity<OrderResponse> updateStatus(
+    public ResponseEntity<OrderResponse> updateStatus(
 
-        @RequestHeader("X-Admin-Id") Long adminId,
+            @RequestHeader("X-Admin-Id") Long adminId,
 
-        @PathVariable Long id,
+            @PathVariable Long id,
 
-        @RequestParam String status) {
+            @RequestParam String status) {
 
-    Long collegeId = adminService
-            .getById(adminId)
-            .getCollege()
-            .getId();
+        Long collegeId = adminService
+                .getById(adminId)
+                .getCollege()
+                .getId();
 
-    OrderResponse updatedOrder = orderService.updateStatus(id, collegeId, status);
+        OrderResponse updatedOrder = orderService.updateStatus(id, collegeId, status);
 
-    return ResponseEntity.ok(updatedOrder);
-}
+        return ResponseEntity.ok(updatedOrder);
+    }
 
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(
@@ -86,14 +88,23 @@ public ResponseEntity<OrderResponse> updateStatus(
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
-    @GetMapping
-    public List<OrderResponse> getAllOrders() {
-        return orderService.getAllOrders(null);
-    }
+   @GetMapping
+public List<OrderResponse> getAllOrders(
+        @RequestHeader("X-Admin-Id") Long adminId) {
+
+    Long collegeId = adminService
+            .getById(adminId)
+            .getCollege()
+            .getId();
+
+    return orderService.getAllOrders(collegeId);
+}
 
     @GetMapping("/wait-estimate")
-    public WaitEstimateDTO getCurrentWaitEstimate() {
-        return orderService.getCurrentWaitEstimate();
+    public WaitEstimateDTO getCurrentWaitEstimate(
+            @RequestParam Long studentId) {
+
+        return orderService.getCurrentWaitEstimate(studentId);
     }
 
     @GetMapping("/{id:\\d+}")
@@ -111,40 +122,45 @@ public ResponseEntity<OrderResponse> updateStatus(
         return orderService.getOrdersByStudent(studentId);
     }
 
+   @GetMapping("/student/{studentId}/active")
+public OrderResponse getActiveOrder(
+        @PathVariable Long studentId) {
+
+    return orderService.getActiveOrder(studentId);
+}
+
     @GetMapping("/queue/current-serving")
-    public Integer getCurrentServingToken() {
+    public Integer getCurrentServingToken(
+            @RequestParam Long studentId) {
 
-        return orderService.getCurrentServingToken();
-
+        return orderService.getCurrentServingToken(studentId);
     }
 
     @GetMapping("/search")
-public Page<OrderResponse> searchOrders(
+    public Page<OrderResponse> searchOrders(
 
-        @RequestHeader("X-Admin-Id") Long adminId,
+            @RequestHeader("X-Admin-Id") Long adminId,
 
-        @RequestParam(required = false) String query,
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        LocalDate date,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 
-        @RequestParam(defaultValue = "newest") String sort,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
 
-    Long collegeId = adminService
-            .getById(adminId)
-            .getCollege()
-            .getId();
+        Long collegeId = adminService
+                .getById(adminId)
+                .getCollege()
+                .getId();
 
-    return orderService.searchOrders(
-            collegeId,
-            query,
-            status,
-            date,
-            sort,
-            page,
-            size);
-}
+        return orderService.searchOrders(
+                collegeId,
+                query,
+                status,
+                date,
+                sort,
+                page,
+                size);
+    }
 }

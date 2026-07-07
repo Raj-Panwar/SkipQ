@@ -79,12 +79,16 @@ public class ProductService {
         repository.delete(product);
     }
 
-    @Transactional(readOnly = true)
-    public List<Product> getLowStockProducts() {
-        return repository.findByStockLessThanEqualOrderByStockAsc(
-                InventoryConstants.LOW_STOCK_THRESHOLD);
-    }
+   @Transactional(readOnly = true)
+public List<Product> getLowStockProducts(Long collegeId) {
 
+    College college = collegeRepository.findById(collegeId)
+            .orElseThrow(() -> new RuntimeException("College not found"));
+
+    return repository.findByCollegeAndStockLessThanEqualOrderByStockAsc(
+            college,
+            InventoryConstants.LOW_STOCK_THRESHOLD);
+}
     @Transactional(readOnly = true)
     public List<Product> getProductsByCollegeCode(String collegeCode) {
 
@@ -94,4 +98,19 @@ public class ProductService {
 
         return repository.findByCollege(college);
     }
+    public Product getProductByIdForCollegeCode(Long id, String collegeCode) {
+
+    College college = collegeRepository
+            .findByCodeIgnoreCase(collegeCode.trim().toUpperCase())
+            .orElseThrow(() -> new RuntimeException("College not found"));
+
+    Product product = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+
+    if (!product.getCollege().getId().equals(college.getId())) {
+        throw new RuntimeException("Product does not belong to this college.");
+    }
+
+    return product;
+}
 }
