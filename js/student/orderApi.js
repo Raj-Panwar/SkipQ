@@ -1,4 +1,5 @@
 // js/student/orderApi.js
+import { getSession } from "../shared/auth.js";
 
 const BASE_URL = "http://localhost:8080/api/orders";
 
@@ -49,10 +50,20 @@ export function getStudentOrders(studentId) {
   return request(`${BASE_URL}/student/${studentId}`);
 }
 export function getCurrentServingToken() {
-    return request(`${BASE_URL}/queue/current-serving`);
+
+    const student = getSession();
+
+    return request(
+        `${BASE_URL}/queue/current-serving?studentId=${student.id}`
+    );
 }
 export function getCurrentWaitEstimate() {
-    return request(`${BASE_URL}/wait-estimate`);
+
+    const student = getSession();
+
+    return request(
+        `${BASE_URL}/wait-estimate?studentId=${student.id}`
+    );
 }
 export function searchOrders({
   query = "",
@@ -81,4 +92,8 @@ export function cancelOrder(orderId, studentId) {
       method: "PUT",
     }
   );
+}
+
+export function getActiveOrder(studentId) {
+  return request(`${BASE_URL}/student/${studentId}/active`);
 }

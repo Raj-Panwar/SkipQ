@@ -2,8 +2,9 @@
 import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
+import { getSession } from "../shared/auth.js";
 import {
-  getOrderById,
+  getActiveOrder,
   getQueueInfo,
   cancelOrder
 } from "./orderApi.js";
@@ -28,32 +29,13 @@ if (!DEV_MODE && !isAuthenticated()) {
 }
 
 initStudentNav("token");
+let order;
+let myTokenValue = 0;
+let nowServingValue = 0;
 
-const order = loadOrder();
-let myTokenValue = parseTokenNumber(order.tokenNumber);
-let nowServingValue = myTokenValue;
-
-renderOrderSummary(order);
-
-loadQueue();
-const queueRefreshInterval = setInterval(loadQueue, 5000);
+initializeTokenPage();
 
 
-
-function loadOrder() {
-  const raw = sessionStorage.getItem("skipq_latest_order");
-  if (raw) return JSON.parse(raw);
-  return {
-    orderId: 203,
-    tokenNumber: "#052",
-    items: [
-      { name: "A4 Spiral Notebook", quantity: 2, price: 65 },
-      { name: "Blue Gel Pen (Pack of 5)", quantity: 1, price: 60 },
-    ],
-    totalAmount: 190,
-    placedAt: new Date().toISOString(),
-  };
-}
 
 function parseTokenNumber(token) {
   return Number(String(token).replace("#", ""));
@@ -61,6 +43,30 @@ function parseTokenNumber(token) {
 
 function formatToken(value) {
   return `#${String(value).padStart(3, "0")}`;
+}
+async function initializeTokenPage() {
+
+  try {
+
+    const student = getSession();
+
+    order = await getActiveOrder(student.id);
+
+    myTokenValue = order.tokenNumber;
+    nowServingValue = myTokenValue;
+
+    renderOrderSummary(order);
+
+    await loadQueue();
+
+    window.queueRefreshInterval = setInterval(loadQueue, 5000);
+
+  } catch (err) {
+
+    alert("You don't have any active orders.");
+
+    window.location.href = "./history.html";
+  }
 }
 
 function renderOrderSummary(order) {
@@ -239,15 +245,3 @@ async function handleCancelOrder() {
     alert(err.message);
   }
 }
-/*function startSimulation() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const interval = setInterval(() => {
-    if (nowServingValue >= myTokenValue) {
-      clearInterval(interval);
-      return;
-    }
-    nowServingValue += 1;
-    renderQueueState();
-  }, 3500);
-}*/

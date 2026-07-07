@@ -36,7 +36,11 @@ export async function getMenuProducts() {
 
 export async function getProductById(id) {
 
-  const response = await fetch(`${BASE_URL}/${id}`);
+  const student = getSession();
+
+  const response = await fetch(
+    `${BASE_URL}/student/${id}?collegeCode=${student.collegeCode}`
+  );
 
   if (!response.ok) {
     throw new Error("Failed to load product");
@@ -44,3 +48,4 @@ export async function getProductById(id) {
 
   return response.json();
 }
+
