@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Account — SkipQ</title>
+  <title>Create Account - SkipQ</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,67 +34,18 @@
       <span class="brand-name-dark">SkipQ</span>
     </header>
 
-    <!-- Hero Section -->
-    <section class="auth-hero" aria-label="App introduction">
-
-      <h1 class="hero-headline">
-        Order now.<br>
-        Pick up when called.
-      </h1>
-
-      <p class="hero-subline">
-        No more standing in line for notebooks, pens, and prints.
-      </p>
-
-      <div class="token-card">
-
-        <div class="token-card-top">
-          <div>
-            <p class="token-label">Now serving</p>
-            <p class="token-number">#046</p>
-          </div>
-
-          <div class="token-wait">
-            <p class="token-label">Avg. wait</p>
-            <p class="token-wait-value">3 min</p>
-          </div>
-        </div>
-
-        <div class="token-timeline">
-          <span class="timeline-chip">042</span>
-          <span class="timeline-chip">043</span>
-          <span class="timeline-chip">044</span>
-          <span class="timeline-chip">045</span>
-          <span class="timeline-chip is-current">046</span>
-          <span class="timeline-chip is-next">047</span>
-          <span class="timeline-chip is-next">048</span>
-        </div>
-
-        <div class="token-progress-track">
-          <div class="token-progress-fill"></div>
-        </div>
-
-        <p class="token-status">
-          <span class="status-dot"></span>
-          Token #046 is being prepared — almost ready
-        </p>
-
-      </div>
-
-      <p class="hero-microcopy">
-        Your stationery, without the wait.
-      </p>
-
-    </section>
-
     <!-- Register Form -->
     <main class="auth-sheet" aria-label="Register">
 
       <div class="sheet-handle"></div>
 
-      <div class="auth-heading">
+      <div class="auth-heading register-heading">
         <h2>Create your account</h2>
         <p>Join SkipQ and start skipping the queue today.</p>
+        <div class="selected-college-banner">
+          <span>Selected College: <strong id="selectedCollegeName">Loading...</strong></span>
+          <button type="button" class="link-button" id="changeCollegeBtn">Change College</button>
+        </div>
       </div>
 
       <div id="formAlert" class="alert alert-error" hidden></div>
@@ -112,14 +63,6 @@
           <input type="email" id="email" name="email" class="input" placeholder="you@college.edu" required>
           <p class="field-error" id="emailError" hidden></p>
         </div>
-        <div class="form-group">
-          <label for="collegeCode">College Code</label>
-
-          <input type="text" id="collegeCode" name="collegeCode" class="input" placeholder="e.g. collegexyz" required>
-
-          <p class="field-error" id="collegeCodeError" hidden></p>
-        </div>
-
         <div class="form-group">
           <label for="phone">Phone Number</label>
           <input type="tel" id="phone" name="phone" class="input" placeholder="9876543210" required>

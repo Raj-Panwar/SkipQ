@@ -1,26 +1,23 @@
 /* ==========================================================================
-   SkipQ — student.css
+   SkipQ â€” student.css
    Styles specific to student-facing pages (auth, menu, cart, token, etc.)
    Mobile-first: base rules target 360px-430px, then scale up.
    ========================================================================== */
-
-/* ---------------------------------------------------------------------- */
-/* Auth screen — full-bleed app shell                                      */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Auth screen â€” full-bleed app shell                                      /
+/ ---------------------------------------------------------------------- */
 .auth-body {
   margin: 0;
   background-color: var(--color-hero-bg);
 }
-
 .auth-screen {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Top bar                                                                 */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Top bar                                                                 /
+/ ---------------------------------------------------------------------- */
 .auth-topbar {
   display: flex;
   align-items: center;
@@ -28,7 +25,6 @@
   padding: var(--space-5) var(--space-5) 0;
   color: var(--color-accent-bright);
 }
-
 .brand-name-dark {
   font-family: var(--font-mono);
   font-size: 1.0625rem;
@@ -36,10 +32,9 @@
   letter-spacing: -0.01em;
   color: var(--color-hero-text);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Hero — headline + live token card                                       */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Hero â€” headline + live token card                                       /
+/ ---------------------------------------------------------------------- */
 .auth-hero {
   color: var(--color-hero-text);
   padding: var(--space-5) var(--space-5) var(--space-7);
@@ -47,7 +42,6 @@
   flex-direction: column;
   gap: var(--space-4);
 }
-
 .hero-headline {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 7vw, 2.25rem);
@@ -56,15 +50,13 @@
   letter-spacing: -0.01em;
   margin-top: var(--space-2);
 }
-
 .hero-subline {
   font-size: 0.9375rem;
   color: var(--color-hero-muted);
   line-height: 1.5;
   max-width: 34ch;
 }
-
-/* Token card — the visual hero */
+/* Token card â€” the visual hero */
 .token-card {
   margin-top: var(--space-2);
   background-color: var(--color-hero-surface);
@@ -76,14 +68,12 @@
   gap: var(--space-4);
   animation: token-card-in 480ms ease both;
 }
-
 .token-card-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-4);
 }
-
 .token-label {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -93,7 +83,6 @@
   color: var(--color-hero-muted);
   margin: 0 0 var(--space-1);
 }
-
 .token-number {
   font-family: var(--font-mono);
   font-size: clamp(2.75rem, 13vw, 3.5rem);
@@ -103,19 +92,16 @@
   margin: 0;
   animation: token-pulse 2.6s ease-in-out infinite;
 }
-
 .token-wait {
   text-align: right;
   flex-shrink: 0;
 }
-
 .token-wait-value {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
 }
-
 /* Horizontal queue timeline */
 .token-timeline {
   display: flex;
@@ -125,11 +111,9 @@
   padding-bottom: var(--space-1);
   scrollbar-width: none;
 }
-
 .token-timeline::-webkit-scrollbar {
   display: none;
 }
-
 .timeline-chip {
   flex-shrink: 0;
   font-family: var(--font-mono);
@@ -140,7 +124,6 @@
   background-color: var(--color-hero-chip);
   color: var(--color-hero-served);
 }
-
 .timeline-chip.is-current {
   font-size: 0.8125rem;
   font-weight: 700;
@@ -149,11 +132,9 @@
   color: var(--color-hero-bg);
   transform: scale(1.05);
 }
-
 .timeline-chip.is-next {
   color: var(--color-hero-text);
 }
-
 /* Progress bar */
 .token-progress-track {
   height: 4px;
@@ -161,7 +142,6 @@
   border-radius: 2px;
   overflow: hidden;
 }
-
 .token-progress-fill {
   height: 100%;
   width: 64%;
@@ -169,7 +149,6 @@
   border-radius: 2px;
   transition: width 1.4s ease;
 }
-
 /* Live status line */
 .token-status {
   display: flex;
@@ -179,7 +158,6 @@
   color: var(--color-hero-muted);
   margin: 0;
 }
-
 .status-dot {
   width: 8px;
   height: 8px;
@@ -188,17 +166,15 @@
   flex-shrink: 0;
   animation: status-dot-pulse 1.8s ease-in-out infinite;
 }
-
 .hero-microcopy {
   font-family: var(--font-display);
   font-size: 0.9375rem;
   font-weight: 500;
   color: var(--color-accent-bright);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Bottom sheet — login form                                                */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Bottom sheet â€” login form                                                /
+/ ---------------------------------------------------------------------- */
 .auth-sheet {
   background-color: var(--color-paper);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -208,7 +184,6 @@
   gap: var(--space-4);
   flex: 1;
 }
-
 .sheet-handle {
   width: 36px;
   height: 4px;
@@ -216,65 +191,103 @@
   background-color: var(--color-border);
   margin: var(--space-1) auto var(--space-2);
 }
-
 .auth-heading {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
-
 .auth-heading h2 {
   font-size: 1.375rem;
   color: var(--color-ink);
 }
-
 .auth-heading p {
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
-
 .auth-switch {
   text-align: center;
   font-size: 0.9375rem;
   color: var(--color-text-muted);
 }
-
 .auth-switch a {
   font-weight: 600;
   color: var(--color-accent-deep);
 }
-
 .auth-footer {
   text-align: center;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Button micro-interaction                                                */
-/* ---------------------------------------------------------------------- */
+.selected-college-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+.selected-college-banner strong {
+  color: var(--color-ink);
+}
+.link-button {
+  border: 0;
+  background: transparent;
+  color: var(--color-accent-deep);
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.college-selection-screen {
+  justify-content: center;
+  padding: var(--space-5);
+}
+.college-selection-sheet {
+  border-radius: var(--radius-lg);
+  flex: 0;
+  width: 100%;
+}
+.college-selection-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-ink);
+  text-align: center;
+}
+.college-selection-brand .brand-mark {
+  color: var(--color-accent-deep);
+}
+.college-selection-brand h1 {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+/* ---------------------------------------------------------------------- /
+/ Button micro-interaction                                                /
+/ ---------------------------------------------------------------------- */
 .btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Animations                                                              */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Animations                                                              /
+/ ---------------------------------------------------------------------- */
 @keyframes token-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.78; }
 }
-
 @keyframes status-dot-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.3); opacity: 0.6; }
 }
-
 @keyframes token-card-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .token-number,
   .status-dot,
@@ -282,10 +295,9 @@
     animation: none;
   }
 }
-
-/* ---------------------------------------------------------------------- */
-/* Tablet and up — widen the shell, keep mobile structure                  */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Tablet and up â€” widen the shell, keep mobile structure                  /
+/ ---------------------------------------------------------------------- */
 @media (min-width: 600px) {
   .auth-screen {
     max-width: 480px;
@@ -293,10 +305,9 @@
     box-shadow: var(--shadow-lg);
   }
 }
-
-/* ---------------------------------------------------------------------- */
-/* Desktop — split layout, hero stays left, sheet becomes a side panel     */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Desktop â€” split layout, hero stays left, sheet becomes a side panel     /
+/ ---------------------------------------------------------------------- */
 @media (min-width: 960px) {
   .auth-body {
     background-color: var(--color-bg);
@@ -305,7 +316,6 @@
     justify-content: center;
     min-height: 100vh;
   }
-
   .auth-screen {
     max-width: none;
     width: min(1040px, 92vw);
@@ -315,26 +325,21 @@
     overflow: hidden;
     box-shadow: var(--shadow-lg);
   }
-
   .auth-topbar {
     position: absolute;
   }
-
   .auth-hero {
     flex: 1.05;
     justify-content: center;
     padding: var(--space-8);
     gap: var(--space-5);
   }
-
   .hero-headline {
     margin-top: var(--space-7);
   }
-
   .token-card {
     max-width: 420px;
   }
-
   .auth-sheet {
     flex: 1;
     border-radius: 0;
@@ -342,33 +347,27 @@
     padding: var(--space-8);
     gap: var(--space-5);
   }
-
   .sheet-handle {
     display: none;
   }
-
   .auth-heading h2 {
     font-size: 1.75rem;
   }
 }
-
 /* ==========================================================================
-   SkipQ — student.css additions
+   SkipQ â€” student.css additions
    Menu, Cart, Token tracking, and Order history pages.
    Mobile-first: base rules target 360px-430px, then scale up.
    ========================================================================== */
-
-/* ---------------------------------------------------------------------- */
-/* App shell (menu / cart / token / history)                               */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ App shell (menu / cart / token / history)                               /
+/ ---------------------------------------------------------------------- */
 .app-body {
   background-color: var(--color-bg);
 }
-
 .app-body-dark {
   background-color: var(--color-hero-bg);
 }
-
 .app-header {
   background-color: var(--color-hero-bg);
   color: var(--color-hero-text);
@@ -380,13 +379,11 @@
   top: 0;
   z-index: 20;
 }
-
 .app-header-simple,
 .app-header-dark {
   flex-direction: row;
   align-items: center;
 }
-
 .app-header-row {
   display: flex;
   align-items: center;
@@ -394,25 +391,21 @@
   gap: var(--space-3);
   width: 100%;
 }
-
 .brand-mini {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   color: var(--color-hero-text);
 }
-
 .brand-mark-light {
   display: flex;
   color: var(--color-accent-bright);
 }
-
 .brand-name-light {
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   font-weight: 700;
 }
-
 .page-title {
   font-family: var(--font-display);
   font-size: 1.125rem;
@@ -421,15 +414,12 @@
   flex: 1;
   text-align: center;
 }
-
 .page-title-light {
   color: var(--color-hero-text);
 }
-
 .header-spacer {
   width: 20px;
 }
-
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -440,30 +430,24 @@
   color: var(--color-text);
   flex-shrink: 0;
 }
-
 .back-link-light {
   color: var(--color-hero-text);
 }
-
 .back-link:hover {
   background-color: var(--color-border);
   text-decoration: none;
 }
-
 .back-link-light:hover {
   background-color: var(--color-hero-chip);
 }
-
 .app-header-simple {
   background-color: var(--color-surface);
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
 }
-
 .app-header-dark {
   background-color: var(--color-hero-bg);
 }
-
 /* Cart icon + badge */
 .cart-icon-link {
   position: relative;
@@ -474,7 +458,6 @@
   height: 36px;
   color: var(--color-hero-text);
 }
-
 .cart-badge {
   position: absolute;
   top: -2px;
@@ -491,7 +474,6 @@
   align-items: center;
   justify-content: center;
 }
-
 /* Search bar */
 .search-bar {
   display: flex;
@@ -503,7 +485,6 @@
   padding: 0 var(--space-3);
   color: var(--color-hero-muted);
 }
-
 .search-input {
   flex: 1;
   background: transparent;
@@ -513,43 +494,36 @@
   font-size: 0.9375rem;
   padding: 11px 0;
 }
-
 .search-input::placeholder {
   color: var(--color-hero-muted);
 }
-
 .search-input:focus {
   outline: none;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Main content area                                                       */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Main content area                                                       /
+/ ---------------------------------------------------------------------- */
 .app-main {
   padding: var(--space-5) var(--space-5) var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
-
 .app-main-dark {
   background-color: var(--color-bg);
 }
-
 /* Welcome block on menu */
 .welcome-block {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
-
 .welcome-greeting {
   font-family: var(--font-display);
   font-size: 1.375rem;
   font-weight: 600;
   color: var(--color-ink);
 }
-
 .welcome-insight {
   display: flex;
   align-items: center;
@@ -557,12 +531,10 @@
   font-size: 0.875rem;
   color: var(--color-text-muted);
 }
-
 .welcome-insight strong {
   color: var(--color-accent-deep);
   font-family: var(--font-mono);
 }
-
 /* Category chips */
 .category-tabs {
   display: flex;
@@ -571,11 +543,9 @@
   padding-bottom: var(--space-1);
   scrollbar-width: none;
 }
-
 .category-tabs::-webkit-scrollbar {
   display: none;
 }
-
 .category-chip {
   flex-shrink: 0;
   font-family: var(--font-body);
@@ -589,26 +559,22 @@
   cursor: pointer;
   transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
-
 .category-chip:hover {
   border-color: var(--color-accent);
 }
-
 .category-chip.is-active {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
   color: #FFFFFF;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Product grid                                                            */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Product grid                                                            /
+/ ---------------------------------------------------------------------- */
 .product-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-4);
 }
-
 .product-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -618,12 +584,10 @@
   flex-direction: column;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-
 .product-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
-
 .product-image-placeholder {
   height: 96px;
   display: flex;
@@ -632,14 +596,12 @@
   background-color: var(--color-accent-soft);
   color: var(--color-primary-light);
 }
-
 .product-card-body {
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
-
 .product-category-tag {
   font-size: 0.6875rem;
   font-weight: 600;
@@ -647,67 +609,56 @@
   text-transform: uppercase;
   color: var(--color-accent-deep);
 }
-
 .product-name {
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-ink);
 }
-
 .product-description {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   line-height: 1.4;
 }
-
 .product-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: var(--space-1);
 }
-
 .product-price {
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--color-ink);
 }
-
 .stock-status {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: var(--radius-sm);
 }
-
 .stock-status.is-in {
   background-color: var(--color-accent-soft);
   color: var(--color-success);
 }
-
 .stock-status.is-out {
   background-color: var(--color-error-soft);
   color: var(--color-error);
 }
-
 .product-card-actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
-
 .product-card-actions .add-to-cart-btn {
   flex: 1;
   padding: 10px 14px;
   font-size: 0.875rem;
 }
-
 .add-to-cart-btn.is-added {
   background-color: var(--color-accent);
 }
-
 /* Quantity selector (shared: menu + cart) */
 .qty-selector {
   display: flex;
@@ -718,11 +669,9 @@
   padding: 4px 6px;
   flex-shrink: 0;
 }
-
 .qty-selector.is-disabled {
   opacity: 0.5;
 }
-
 .qty-step {
   width: 26px;
   height: 26px;
@@ -737,16 +686,13 @@
   align-items: center;
   justify-content: center;
 }
-
 .qty-step:hover:not(:disabled) {
   background-color: var(--color-accent-soft);
 }
-
 .qty-step:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
-
 .qty-value {
   min-width: 1.5ch;
   text-align: center;
@@ -754,7 +700,6 @@
   font-weight: 600;
   font-size: 0.9375rem;
 }
-
 /* Empty states */
 .empty-state {
   text-align: center;
@@ -762,7 +707,6 @@
   font-size: 0.9375rem;
   padding: var(--space-6) var(--space-4);
 }
-
 .empty-state-block {
   text-align: center;
   display: flex;
@@ -771,26 +715,22 @@
   gap: var(--space-3);
   padding: var(--space-7) var(--space-4);
 }
-
 .empty-state-icon {
   font-size: 2.5rem;
   margin: 0;
 }
-
 .empty-state-block h2 {
   font-size: 1.25rem;
   color: var(--color-ink);
 }
-
 .empty-state-block p {
   font-size: 0.9375rem;
   color: var(--color-text-muted);
   max-width: 32ch;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Sticky cart summary bar (menu page)                                     */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Sticky cart summary bar (menu page)                                     /
+/ ---------------------------------------------------------------------- */
 .cart-summary-bar {
   position: fixed;
   bottom: 0;
@@ -806,44 +746,37 @@
   gap: var(--space-4);
   z-index: 30;
 }
-
 .cart-summary-info {
   display: flex;
   flex-direction: column;
 }
-
 .cart-summary-count {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
-
 .cart-summary-total {
   font-family: var(--font-mono);
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--color-ink);
 }
-
 .cart-summary-bar .btn {
   padding: 11px 22px;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Cart page — item rows                                                   */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Cart page â€” item rows                                                   /
+/ ---------------------------------------------------------------------- */
 .cart-items-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-
 .cart-item-row {
   padding: var(--space-3);
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: var(--space-3);
 }
-
 .cart-item-image-placeholder {
   width: 56px;
   height: 56px;
@@ -854,25 +787,21 @@
   align-items: center;
   justify-content: center;
 }
-
 .cart-item-details {
   display: flex;
   flex-direction: column;
   gap: 2px;
   grid-column: 2;
 }
-
 .cart-item-name {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-ink);
 }
-
 .cart-item-unit-price {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
-
 .cart-item-controls {
   grid-column: 1 / -1;
   display: flex;
@@ -881,14 +810,12 @@
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
-
 .cart-item-subtotal {
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.9375rem;
   color: var(--color-ink);
 }
-
 .remove-item-btn {
   background: none;
   border: none;
@@ -898,11 +825,9 @@
   cursor: pointer;
   padding: 4px;
 }
-
 .remove-item-btn:hover {
   text-decoration: underline;
 }
-
 /* Order summary card (cart + token pages) */
 .order-summary-card {
   padding: var(--space-5);
@@ -910,12 +835,10 @@
   flex-direction: column;
   gap: var(--space-3);
 }
-
 .order-summary-title {
   font-size: 1.0625rem;
   color: var(--color-ink);
 }
-
 .order-summary-row {
   display: flex;
   align-items: center;
@@ -923,7 +846,6 @@
   font-size: 0.9375rem;
   color: var(--color-text-muted);
 }
-
 .order-summary-total {
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
@@ -931,14 +853,12 @@
   font-weight: 700;
   color: var(--color-ink);
 }
-
 .order-summary-items {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   list-style: none;
 }
-
 .order-summary-item {
   display: flex;
   align-items: center;
@@ -946,10 +866,9 @@
   font-size: 0.9375rem;
   color: var(--color-text-muted);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Token tracking page                                                     */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Token tracking page                                                     /
+/ ---------------------------------------------------------------------- */
 .token-hero-card {
   background-color: var(--color-hero-surface);
   border: 1px solid var(--color-hero-border);
@@ -962,7 +881,6 @@
   color: var(--color-hero-text);
   text-align: center;
 }
-
 .token-hero-label {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -972,7 +890,6 @@
   color: var(--color-hero-muted);
   margin: 0;
 }
-
 .token-hero-number {
   font-family: var(--font-mono);
   font-size: clamp(3rem, 14vw, 4rem);
@@ -982,7 +899,6 @@
   margin: 0;
   animation: token-pulse 2.6s ease-in-out infinite;
 }
-
 .serving-row {
   display: flex;
   align-items: center;
@@ -991,30 +907,25 @@
   color: var(--color-hero-muted);
   margin-top: var(--space-2);
 }
-
 .serving-row strong {
   font-family: var(--font-mono);
   color: var(--color-hero-text);
   font-size: 1rem;
 }
-
 .token-progress-track-large {
   width: 100%;
   height: 6px;
   margin-top: var(--space-2);
 }
-
 .wait-estimate {
   font-size: 0.875rem;
   color: var(--color-hero-muted);
   margin: 0;
 }
-
 .wait-estimate strong {
   color: var(--color-hero-text);
   font-family: var(--font-mono);
 }
-
 /* Queue timeline card (light surface, dark page) */
 .queue-timeline-card {
   padding: var(--space-4) var(--space-5);
@@ -1022,63 +933,53 @@
   flex-direction: column;
   gap: var(--space-3);
 }
-
 .queue-timeline-label {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-muted);
 }
-
 .token-timeline-light .timeline-chip {
   background-color: var(--color-bg);
   color: var(--color-text-muted);
 }
-
 .token-timeline-light .timeline-chip.is-current {
   background-color: var(--color-primary);
   color: #FFFFFF;
 }
-
 .token-timeline-light .timeline-chip.is-mine {
   background-color: var(--color-accent-bright);
   color: #FFFFFF;
   font-weight: 700;
 }
-
-/* ---------------------------------------------------------------------- */
-/* Order history page                                                      */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Order history page                                                      /
+/ ---------------------------------------------------------------------- */
 .history-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-
 .history-card {
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
-
 .history-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 .history-token {
   font-family: var(--font-mono);
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--color-ink);
 }
-
 .history-items {
   font-size: 0.875rem;
   color: var(--color-text-muted);
 }
-
 .history-card-footer {
   display: flex;
   align-items: center;
@@ -1086,39 +987,33 @@
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border);
 }
-
 .history-date {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
-
 .history-amount {
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.9375rem;
   color: var(--color-ink);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Register page additions — password strength meter + checkbox            */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Register page additions â€” password strength meter + checkbox            /
+/ ---------------------------------------------------------------------- */
 .strength-meter {
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-1);
 }
-
 .strength-bar {
   flex: 1;
   height: 4px;
   border-radius: 2px;
   background-color: var(--color-border);
 }
-
 .strength-bar.is-weak { background-color: var(--color-error); }
 .strength-bar.is-okay { background-color: var(--color-warning); }
 .strength-bar.is-strong { background-color: var(--color-accent); }
-
 .strength-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1126,17 +1021,14 @@
   margin: 0;
   min-height: 1em;
 }
-
 .strength-label.text-weak { color: var(--color-error); }
 .strength-label.text-okay { color: #946C00; }
 .strength-label.text-strong { color: var(--color-success); }
-
 .form-check {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
 }
-
 .form-check .checkbox {
   width: 18px;
   height: 18px;
@@ -1144,35 +1036,29 @@
   accent-color: var(--color-primary);
   flex-shrink: 0;
 }
-
 .form-check label {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   line-height: 1.4;
 }
-
 .form-check label a {
   font-weight: 600;
   color: var(--color-accent-deep);
 }
-
-/* ---------------------------------------------------------------------- */
-/* Responsive — tablet (2-column grid)                                     */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Responsive â€” tablet (2-column grid)                                     /
+/ ---------------------------------------------------------------------- */
 @media (min-width: 600px) {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
   .cart-item-row {
     grid-template-columns: 64px 1fr auto;
     align-items: center;
   }
-
   .cart-item-details {
     grid-column: 2;
   }
-
   .cart-item-controls {
     grid-column: 3;
     flex-direction: column;
@@ -1181,10 +1067,9 @@
     margin-top: 0;
   }
 }
-
-/* ---------------------------------------------------------------------- */
-/* Responsive — desktop (3-column grid, wider shell)                       */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Responsive â€” desktop (3-column grid, wider shell)                       /
+/ ---------------------------------------------------------------------- */
 @media (min-width: 960px) {
   .app-header,
   .app-main,
@@ -1192,32 +1077,26 @@
     padding-left: max(var(--space-7), calc((100vw - 1040px) / 2));
     padding-right: max(var(--space-7), calc((100vw - 1040px) / 2));
   }
-
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-
   .app-main {
     padding-top: var(--space-6);
     padding-bottom: var(--space-7);
   }
-
   .cart-summary-bar {
     position: sticky;
   }
 }
-
 /* ==========================================================
    PRINT JOB UPLOAD CARD
 ========================================================== */
-
 .print-upload-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 14px;
 }
-
 .print-file-input {
   width: 100%;
   padding: 10px;
@@ -1226,20 +1105,16 @@
   background: var(--color-bg);
   font-size: 0.875rem;
 }
-
 .print-file-input:hover {
   border-color: var(--color-primary);
 }
-
 .print-pages,
 .print-copies {
   width: 100%;
 }
-
 .print-upload-section .btn {
   width: 100%;
 }
-
 .print-file-input::file-selector-button {
   background: var(--color-primary);
   color: white;
@@ -1249,19 +1124,15 @@
   margin-right: 10px;
   cursor: pointer;
 }
-
 .print-file-input::file-selector-button:hover {
   background: var(--color-primary-light);
 }
-
 .product-card:has(.print-upload-section) {
   border: 2px solid var(--color-accent-soft);
 }
-
 .product-card:has(.print-upload-section) .product-image-placeholder {
   background: #eefaf2;
 }
-
 .product-card:has(.print-upload-section) .product-category-tag {
   color: var(--color-primary);
   font-weight: 700;
@@ -1269,22 +1140,24 @@
 /* ==========================================================================
    APPEND THIS BLOCK TO THE BOTTOM OF student.css
    ========================================================================== */
-
-/* ---------------------------------------------------------------------- */
-/* Toast notification system                                               */
-/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- /
+/ Toast notification system                                               /
+/ ---------------------------------------------------------------------- */
 .toast-container {
   position: fixed;
   top: var(--space-5);
-  right: var(--space-4);
-  left: var(--space-4);
-  z-index: 100;
+  right: var(--space-5);
+
+  z-index: 9999;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+
+  width: min(420px, calc(100vw - 32px));
+
   pointer-events: none;
 }
-
 .toast {
   display: flex;
   align-items: flex-start;
@@ -1303,53 +1176,44 @@
   transform: translateY(-8px) scale(0.97);
   transition: opacity 0.28s ease, transform 0.28s ease;
   max-width: 420px;
-  margin-left: auto;
+  width: 100%;
 }
-
 .toast.is-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
-
 .toast.is-leaving {
   opacity: 0;
   transform: translateY(-6px) scale(0.97);
 }
-
 .toast-success {
   background-color: var(--color-accent-soft);
   border-color: rgba(82, 183, 136, 0.3);
   color: var(--color-success);
 }
-
 .toast-error {
   background-color: var(--color-error-soft);
   border-color: rgba(230, 57, 70, 0.2);
   color: var(--color-error);
 }
-
 .toast-warning {
   background-color: #FFF3CD;
   border-color: rgba(244, 162, 97, 0.3);
   color: #7A4F00;
 }
-
 .toast-info {
   background-color: var(--color-hero-surface);
   border-color: var(--color-hero-border);
   color: var(--color-hero-text);
 }
-
 .toast-icon {
   display: flex;
   flex-shrink: 0;
   margin-top: 1px;
 }
-
 .toast-message {
   flex: 1;
 }
-
 .toast-close {
   background: none;
   border: none;
@@ -1361,22 +1225,36 @@
   color: inherit;
   line-height: 1;
 }
-
 .toast-close:hover {
   opacity: 1;
 }
+@media (max-width:480px){
 
-@media (min-width: 480px) {
-  .toast-container {
-    left: auto;
-    min-width: 300px;
-    max-width: 420px;
-  }
+    .toast-container{
+
+        left:16px;
+        right:16px;
+        width:auto;
+    }
+
+
 }
 
-/* ---------------------------------------------------------------------- */
-/* Student bottom navigation bar                                            */
-/* ---------------------------------------------------------------------- */
+.toast-close{
+
+    font-size:18px;
+    opacity:.7;
+    transition:.2s;
+}
+
+.toast-close:hover{
+
+    opacity:1;
+    transform:scale(1.1);
+}
+/* ---------------------------------------------------------------------- /
+/ Student bottom navigation bar                                            /
+/ ---------------------------------------------------------------------- */
 .student-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1390,7 +1268,6 @@
   z-index: 40;
   padding-bottom: env(safe-area-inset-bottom);
 }
-
 .nav-tab {
   flex: 1;
   display: flex;
@@ -1410,18 +1287,15 @@
   transition: color var(--transition-fast);
   position: relative;
 }
-
 .nav-tab:hover,
 .nav-tab.is-active {
   color: var(--color-primary);
   text-decoration: none;
 }
-
 .nav-tab.is-active .nav-tab-icon {
   background-color: var(--color-accent-soft);
   border-radius: var(--radius-sm);
 }
-
 .nav-tab-icon {
   display: flex;
   align-items: center;
@@ -1432,19 +1306,15 @@
   position: relative;
   transition: background-color var(--transition-fast);
 }
-
 .nav-tab-label {
   line-height: 1;
 }
-
 .nav-tab-logout {
   color: var(--color-error);
 }
-
 .nav-tab-logout:hover {
   color: var(--color-error);
 }
-
 .nav-badge {
   position: absolute;
   top: -2px;
@@ -1461,28 +1331,23 @@
   align-items: center;
   justify-content: center;
 }
-
 /* Give app-main breathing room above the bottom nav */
 .app-main.has-bottom-nav,
 .auth-sheet.has-bottom-nav {
   padding-bottom: calc(var(--space-8) + 56px);
 }
-
 /* Adjust cart summary bar so it sits above the bottom nav */
 .cart-summary-bar {
   bottom: 56px;
 }
-
 /* Desktop: hide bottom nav, use inline navigation */
 @media (min-width: 960px) {
   .student-bottom-nav {
     display: flex;
   }
-
   .app-main.has-bottom-nav {
     padding-bottom: var(--space-7);
   }
-
   .cart-summary-bar {
     bottom: 0;
   }
@@ -1490,14 +1355,12 @@
 /* ==========================================================================
    APPEND THIS SMALL BLOCK TO student.css
    New stock-status variant for low-stock products on the menu page.
-   (.is-in and .is-out already exist — this adds the missing .is-low state.)
+   (.is-in and .is-out already exist â€” this adds the missing .is-low state.)
    ========================================================================== */
-
 .stock-status.is-low {
   background-color: #FFF3CD;
   color: #946C00;
 }
-
 .notification-panel {
     position: absolute;
     top: 70px;
@@ -1505,37 +1368,31 @@
     width: 320px;
     max-height: 400px;
     overflow-y: auto;
+background: #ffffff;
+border: 1px solid #ddd;
+border-radius: 12px;
+box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 
-    background: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-
-    padding: 12px;
-    z-index: 9999;
+padding: 12px;
+z-index: 9999;
 }
-
 .notification-panel ul {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-
 .notification-panel li {
     padding: 12px;
     border-bottom: 1px solid #eee;
     font-size: 14px;
 }
-
 .notification-panel li:last-child {
     border-bottom: none;
 }
-
 .notif-unread {
     background: #eef7ff;
     font-weight: 600;
 }
-
 .notif-read {
     color: #666;
 }
@@ -1544,100 +1401,86 @@
     align-items:center;
     gap:14px;
 }
-
 .notification-btn{
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+background: transparent;
+border: none;
+outline: none;
+padding: 0;
 
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 0;
+color: white;
+cursor: pointer;
 
-    color: white;
-    cursor: pointer;
-
-    transition: transform .2s ease;
+transition: transform .2s ease;
 }
-
 .notification-btn:hover{
     transform: scale(1.08);
 }
-
 .notification-btn svg{
     width: 22px;
     height: 22px;
 }
-
 .notification-badge{
     position:absolute;
     top:-10px;
     right:-10px;
+min-width:18px;
+height:18px;
+padding:0 5px;
 
-    min-width:18px;
-    height:18px;
-    padding:0 5px;
+display:flex;
+align-items:center;
+justify-content:center;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+border-radius:999px;
 
-    border-radius:999px;
+background:#ff6b35;
+color:#024707;
 
-    background:#ff6b35;
-    color:#024707;
+font-size:11px;
+font-weight:700;
 
-    font-size:11px;
-    font-weight:700;
-
-    border:2px solid #10351f;
+border:2px solid #10351f;
 }
-
 .notification-item{
     display:flex;
     gap:12px;
     align-items:flex-start;
 }
-
 .notification-icon{
     font-size:22px;
     flex-shrink:0;
 }
-
 .notification-content{
     flex:1;
 }
-
 .notification-message{
     font-size:14px;
     font-weight:500;
     color:#222;
     line-height:1.4;
 }
-
 .notification-time{
     margin-top:6px;
     font-size:12px;
     color:#888;
 }
 @keyframes bellPop{
-
-    0%{
-        transform:scale(1);
-    }
-
-    40%{
-        transform:scale(1.3);
-    }
-
-    100%{
-        transform:scale(1);
-    }
-
+0%{
+    transform:scale(1);
 }
 
+40%{
+    transform:scale(1.3);
+}
+
+100%{
+    transform:scale(1);
+}
+}
 .notification-btn.new{
     animation:bellPop .4s ease;
 }
@@ -1646,41 +1489,36 @@
     top:24px;
     right:24px;
     width:320px;
+background:white;
+border-radius:16px;
 
-    background:white;
-    border-radius:16px;
+padding:18px;
 
-    padding:18px;
+box-shadow:0 15px 40px rgba(0,0,0,.18);
 
-    box-shadow:0 15px 40px rgba(0,0,0,.18);
+z-index:9999;
 
-    z-index:9999;
+transform:translateX(380px);
 
-    transform:translateX(380px);
+opacity:0;
 
-    opacity:0;
-
-    transition:.3s;
+transition:.3s;
 }
-
 .notification-toast.show{
     transform:translateX(0);
     opacity:1;
 }
-
 .toast-title{
     font-weight:700;
     margin-bottom:8px;
     font-size:15px;
 }
-
 .toast-message{
     color:#555;
     line-height:1.5;
     font-size:14px;
 }
 /* ===== Estimated Wait Card ===== */
-
 .queue-status-card {
   margin: 0.8rem 0 1.2rem;
   padding: 0.8rem 1rem;
@@ -1692,7 +1530,6 @@
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
   text-align: center;
 }
-
 .queue-title {
   font-size: 0.72rem;
   font-weight: 600;
@@ -1701,27 +1538,21 @@
   color: #6b7280;
   margin-bottom: 0.3rem;
 }
-
 .queue-wait {
   font-size: 1.45rem;
   font-weight: 700;
   color: var(--color-primary);
   line-height: 1.1;
 }
-
 .queue-subtitle {
   margin-top: 0.2rem;
   font-size: 0.8rem;
   color: #6b7280;
 }
-
-
-
 .badge-cancelled {
   background: #fee2e2;
   color: #b91c1c;
 }
-
 .cancelled-message {
   margin: 1.5rem 0;
   padding: 1.25rem;
@@ -1729,14 +1560,423 @@
   border-left: 4px solid #dc2626;
   background: #fef2f2;
 }
-
 .cancelled-message h3 {
   margin-bottom: 0.5rem;
   color: #b91c1c;
 }
-
 .cancelled-message p {
   margin: 0;
   color: #7f1d1d;
   line-height: 1.5;
 }
+
+/* ==========================================================
+   AUTH UI POLISH (College Selection, Login & Register)
+   ========================================================== */
+
+/* Smooth page entrance */
+.auth-screen {
+    animation: authFade 0.45s ease;
+}
+
+@keyframes authFade {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hero spacing */
+.auth-hero {
+    padding-top: 28px;
+    padding-bottom: 40px;
+}
+
+.hero-headline {
+    font-size: clamp(2rem, 7vw, 2.7rem);
+    line-height: 1.15;
+    margin-bottom: 6px;
+}
+
+.hero-subline {
+    font-size: .98rem;
+    line-height: 1.7;
+    opacity: .92;
+}
+
+/* Better token card */
+.token-card {
+    border-radius: 22px;
+    box-shadow:
+        0 18px 40px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.05);
+
+    backdrop-filter: blur(12px);
+
+    transition: .3s ease;
+}
+
+.token-card:hover {
+    transform: translateY(-3px);
+}
+
+.token-number {
+    font-size: clamp(3rem, 12vw, 4rem);
+    letter-spacing: -2px;
+}
+
+.timeline-chip {
+    transition: .25s;
+}
+
+.timeline-chip.is-current {
+    transform: scale(1.12);
+    box-shadow: 0 10px 22px rgba(82,183,136,.28);
+}
+
+/* Sheet */
+.auth-sheet {
+    box-shadow:
+        0 -12px 35px rgba(0,0,0,.05);
+
+    padding-top: 22px;
+}
+
+/* Heading */
+.auth-heading h2 {
+    font-size: 1.55rem;
+    margin-bottom: 6px;
+}
+
+.auth-heading p {
+    line-height: 1.6;
+}
+
+/* Selected college banner */
+.selected-college-banner {
+
+    margin-top: 12px;
+
+    padding: 14px 18px;
+
+    border-radius: 16px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(82,183,136,.10),
+        rgba(82,183,136,.04)
+    );
+
+    border-left: 5px solid var(--color-accent);
+
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+
+    transition: .25s;
+}
+
+.selected-college-banner:hover{
+    transform: translateY(-1px);
+}
+
+.selected-college-banner strong{
+    font-size:.95rem;
+}
+
+/* Change college button */
+.link-button{
+    padding:6px 10px;
+
+    border-radius:10px;
+
+    transition:.25s;
+}
+
+.link-button:hover{
+
+    background:rgba(82,183,136,.12);
+
+    text-decoration:none;
+}
+
+/* Inputs */
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.input{
+
+    border-radius:14px;
+
+    transition:
+        border-color .25s,
+        box-shadow .25s,
+        transform .25s;
+
+    height:52px;
+}
+
+.input:focus{
+
+    transform:translateY(-1px);
+
+    border-color:var(--color-accent);
+
+    box-shadow:
+        0 0 0 4px rgba(82,183,136,.15);
+}
+
+/* Password button */
+
+.input-action{
+
+    transition:.25s;
+}
+
+.input-action:hover{
+
+    color:var(--color-accent-deep);
+}
+
+/* Primary button */
+
+.btn-primary{
+
+    height:54px;
+
+    border-radius:14px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+    transition:.25s;
+}
+
+.btn-primary:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 14px 30px rgba(82,183,136,.30);
+}
+
+.btn-primary:active{
+
+    transform:scale(.98);
+}
+
+/* Footer links */
+
+.auth-switch a,
+.auth-footer a{
+
+    transition:.25s;
+}
+
+.auth-switch a:hover,
+.auth-footer a:hover{
+
+    color:var(--color-accent);
+
+}
+
+/* ---------- College Selection ---------- */
+
+.college-selection-screen{
+
+    justify-content:center;
+
+    background:
+        radial-gradient(circle at top,
+        rgba(82,183,136,.10),
+        transparent 55%);
+}
+
+.college-selection-sheet{
+
+    border-radius:26px;
+
+    box-shadow:
+        0 24px 55px rgba(0,0,0,.08);
+
+    padding:32px;
+}
+
+.college-selection-brand{
+
+    margin-bottom:12px;
+}
+
+.college-selection-brand .brand-mark{
+
+    width:74px;
+    height:74px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:
+        rgba(82,183,136,.12);
+
+    margin-bottom:10px;
+}
+
+.college-selection-brand h1{
+
+    font-size:2rem;
+
+    margin-bottom:6px;
+}
+
+.college-selection-brand p{
+
+    color:var(--color-text-muted);
+
+    line-height:1.6;
+
+    max-width:260px;
+}
+
+/* Register page */
+
+.strength-meter{
+
+    margin-top:10px;
+}
+
+.strength-bar{
+
+    height:5px;
+
+    border-radius:999px;
+}
+
+/* Nice fade */
+
+.auth-sheet,
+.token-card,
+.selected-college-banner{
+
+    animation:fadeUp .45s ease;
+}
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(12px);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+    }
+}
+
+.register-heading{
+    margin-top:18px;
+}
+
+.brand-name-dark{
+    color:#173321 !important;
+}
+
+.auth-heading h2{
+    color:#173321;
+}
+
+.auth-heading p{
+    color:#667085;
+}
+.selected-college-banner{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    gap:18px;
+
+    margin-top:14px;
+
+    padding:16px 18px;
+
+    background:#f4fbf7;
+
+    border-left:5px solid #52b788;
+
+    border-radius:16px;
+
+    box-shadow:0 8px 24px rgba(0,0,0,.05);
+}
+
+.selected-college-banner strong{
+
+    color:#173321;
+
+    font-weight:700;
+}
+.auth-hero{
+
+    background:#173321;
+
+    color:white;
+}
+
+.hero-subline{
+
+    color:#c8d9d0;
+}
+
+.hero-microcopy{
+
+    color:#ff7a3d;
+}
+.auth-sheet{
+
+    background:#fffdf8;
+
+    box-shadow:
+        -12px 0 40px rgba(0,0,0,.05);
+}
+
+.input{
+
+    height:56px;
+
+    font-size:16px;
+}
+
+.btn-primary{
+
+    height:58px;
+
+    font-size:17px;
+
+    border-radius:15px;
+}
+
+.college-subtitle{
+
+    text-align:center;
+
+    color:#667085;
+
+    margin-bottom:22px;
+
+    line-height:1.6;
+}
+

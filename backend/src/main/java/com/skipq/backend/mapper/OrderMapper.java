@@ -31,12 +31,23 @@ public class OrderMapper {
 
     private OrderItemResponse toItemResponse(OrderItem item) {
 
-        return new OrderItemResponse(
-                item.getId(),
-                item.getProductName(),
-                item.getQuantity(),
-                item.getPrice(),
-                item.getItemType()
-        );
-    }
+    OrderItemResponse dto = new OrderItemResponse();
+
+    dto.setId(item.getId());
+    dto.setProductName(item.getProductName());
+    dto.setQuantity(item.getQuantity());
+    dto.setPrice(item.getPrice());
+    dto.setItemType(item.getItemType());
+
+    // Print job fields
+    dto.setFileName(item.getFileName());
+    dto.setOriginalFileName(item.getOriginalFileName());
+    dto.setPages(item.getPages());
+    dto.setCopies(item.getCopies()); // one print item = number of copies
+    dto.setColorMode(item.getColorMode());
+    dto.setPaperSize(item.getPaperSize());
+    dto.setSided(item.getSided());
+
+    return dto;
+}
 }

@@ -1,13 +1,24 @@
+
 // js/student/loginPage.js
 // Page controller for student/login.html.
-// Validates the form, calls authApi.login, persists the session,
-// redirects to the menu on success, and runs the decorative
-// "now serving" token simulation in the hero card.
+// Reads the selected college from sessionStorage, loads that college's public
+// queue snapshot, validates the form, logs in, and redirects to the menu.
 
 import { loginStudent } from "../api/studentApi.js";
 import { setSession, isLoggedIn } from "../shared/auth.js";
 import { isValidEmail, isValidPassword } from "../utils/validators.js";
-import { getCurrentServingToken } from "./orderApi.js";
+import { getPreLoginQueue } from "./orderApi.js";
+
+const SELECTED_COLLEGE_CODE_KEY = "selectedCollegeCode";
+const SELECTED_COLLEGE_NAME_KEY = "selectedCollegeName";
+
+const selectedCollegeCode = sessionStorage.getItem(SELECTED_COLLEGE_CODE_KEY);
+const selectedCollegeName = sessionStorage.getItem(SELECTED_COLLEGE_NAME_KEY);
+
+if (!selectedCollegeCode) {
+  window.location.href = "./select-college.html";
+}
+
 const form = document.getElementById("loginForm");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -16,15 +27,28 @@ const passwordError = document.getElementById("passwordError");
 const formAlert = document.getElementById("formAlert");
 const submitBtn = document.getElementById("submitBtn");
 const togglePasswordBtn = document.getElementById("togglePassword");
-const collegeCodeInput = document.getElementById("collegeCode");
-const collegeCodeError = document.getElementById("collegeCodeError");
+const selectedCollegeNameEl = document.getElementById("selectedCollegeName");
+const changeCollegeBtn = document.getElementById("changeCollegeBtn");
 
-// If the student is already logged in, skip straight to the menu.
 if (isLoggedIn()) {
   window.location.href = "./menu.html";
 }
+
+selectedCollegeNameEl.textContent = selectedCollegeName || selectedCollegeCode;
+
+changeCollegeBtn.addEventListener("click", () => {
+    sessionStorage.removeItem("selectedCollegeCode");
+    sessionStorage.removeItem("selectedCollegeName");
+    window.location.replace("./select-college.html");
+});
+
 loadCurrentServing();
-setInterval(loadCurrentServing, 1000);
+
+const queueTimer = setInterval(loadCurrentServing, 5000);
+
+window.addEventListener("beforeunload", () => {
+    clearInterval(queueTimer);
+});
 
 togglePasswordBtn.addEventListener("click", () => {
   const isHidden = passwordInput.type === "password";
@@ -40,24 +64,19 @@ form.addEventListener("submit", async (event) => {
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const collegeCode = collegeCodeInput.value.trim().toLowerCase();
-  
 
-const isValid = validateForm(collegeCode, email, password);
-  if (!isValid) return;
+  if (!validateForm(email, password)) return;
 
   setLoading(true);
 
   try {
-    console.log("Login button clicked");
     const student = await loginStudent({
-      collegeCode,
+      collegeCode: selectedCollegeCode,
       email,
       password
     });
 
     setSession(student);
-
     window.location.href = "./menu.html";
   } catch (error) {
     showAlert(error.message || "Login failed. Please try again.");
@@ -66,26 +85,8 @@ const isValid = validateForm(collegeCode, email, password);
   }
 });
 
-/**
- * @param {string} email
- * @param {string} password
- * @returns {boolean} true if both fields pass validation
- */
-
-function validateForm(collegeCode, email, password) {
-
+function validateForm(email, password) {
   let valid = true;
-
-  if (!collegeCode) {
-    showFieldError(
-      collegeCodeInput,
-      collegeCodeError,
-      "College code is required."
-    );
-    valid = false;
-  } else {
-    clearFieldError(collegeCodeInput, collegeCodeError);
-  }
 
   if (!isValidEmail(email)) {
     showFieldError(emailInput, emailError, "Enter a valid email address.");
@@ -103,6 +104,7 @@ function validateForm(collegeCode, email, password) {
 
   return valid;
 }
+
 function showFieldError(input, errorEl, message) {
   input.classList.add("is-invalid");
   errorEl.textContent = message;
@@ -130,61 +132,63 @@ function setLoading(isLoading) {
   submitBtn.classList.toggle("is-loading", isLoading);
 }
 
-/**
- * Decorative "live queue" simulation in the hero token card.
- * Every few seconds the progress bar fills, the current token advances,
- * and the horizontal timeline shifts — purely illustrative, no API call.
- * Respects prefers-reduced-motion (shows a static snapshot).
- */
 async function loadCurrentServing() {
+  if (!selectedCollegeCode) return;
+
   try {
-    const token = await getCurrentServingToken();
+    const queue = await getPreLoginQueue(selectedCollegeCode);
+    const token = queue.currentServingToken;
+
+    if (token === null || token === undefined) {
+      document.getElementById("tokenNumber").textContent = "---";
+      document.getElementById("tokenStatus").innerHTML = `
+        <span class="status-dot" aria-hidden="true"></span>
+        No active orders right now
+      `;
+      renderQueueTimeline(document.getElementById("tokenTimeline"), []);
+      return;
+    }
+
     const padded = String(token).padStart(3, "0");
 
     document.getElementById("tokenNumber").textContent = `#${padded}`;
-
     document.getElementById("tokenStatus").innerHTML = `
       <span class="status-dot" aria-hidden="true"></span>
-      Token #${padded} is being prepared — almost ready
+      Token #${padded} is being prepared
     `;
 
-    shiftTimeline(
+    renderQueueTimeline(
       document.getElementById("tokenTimeline"),
-      token
+      queue.queueTokens || []
     );
-
   } catch (err) {
     console.error(err);
   }
 }
 
+function renderQueueTimeline(timeline, tokens) {
+  if (!tokens.length) {
+    const span = document.createElement("span");
+    span.className = "timeline-chip is-current";
+    span.textContent = "No queue";
+    timeline.replaceChildren(span);
+    return;
+  }
 
-/**
- * Shifts the horizontal chip timeline so the new "current" token
- * is centered, with served tokens before it and upcoming after.
- * @param {HTMLElement} timeline
- * @param {number} current
- */
-function shiftTimeline(timeline, current) {
-  const chips = [];
-  for (let offset = -4; offset <= 2; offset++) {
-    const value = current + offset;
-    const padded = String(value).padStart(3, "0");
+  const chips = tokens.slice(0, 8).map((value, index) => {
     const span = document.createElement("span");
     span.className = "timeline-chip";
 
-    if (offset === 0) {
+    if (index === 0) {
       span.classList.add("is-current");
       span.id = "currentChip";
-    } else if (offset > 0) {
-      span.classList.add("is-next");
     } else {
-      span.setAttribute("data-served", "");
+      span.classList.add("is-next");
     }
 
-    span.textContent = padded;
-    chips.push(span);
-  }
+    span.textContent = String(value).padStart(3, "0");
+    return span;
+  });
 
   timeline.replaceChildren(...chips);
 

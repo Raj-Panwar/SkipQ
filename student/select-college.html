@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select College - SkipQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+
+<body class="auth-body">
+  <div class="auth-screen college-selection-screen">
+    <main class="auth-sheet college-selection-sheet" aria-label="Select college">
+      <header class="college-selection-brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" />
+            <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <circle cx="29" cy="29" r="4.5" fill="currentColor" />
+          </svg>
+        </span>
+        <h1>SkipQ</h1>
+        <h2>Choose your College</h2>
+
+<p class="college-subtitle">
+Enter your college code to continue.
+</p>
+      </header>
+
+      <div id="formAlert" class="alert alert-error" role="alert" hidden></div>
+
+      <form id="collegeSelectionForm" class="form" novalidate>
+        <div class="form-group">
+          <label for="collegeCode">College Code</label>
+          <input type="text" id="collegeCode" name="collegeCode" class="input" placeholder="e.g. collegexyz" required
+            autocomplete="organization">
+          <p class="field-error" id="collegeCodeError" hidden></p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span class="btn-label">Continue</span>
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <script type="module" src="../js/student/collegeSelectionPage.js"></script>
+</body>
+
+</html>

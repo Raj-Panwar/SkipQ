@@ -2,13 +2,14 @@ package com.skipq.backend.controller;
 
 import com.skipq.backend.service.AdminService;
 import com.skipq.backend.dto.CreateOrderRequest;
+import com.skipq.backend.dto.PreLoginQueueDTO;
 import com.skipq.backend.dto.QueueInfoDTO;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.service.OrderService;
 import com.skipq.backend.exception.OrderNotFoundException;
 import com.skipq.backend.dto.WaitEstimateDTO;
 import com.skipq.backend.dto.order.OrderResponse;
-import com.skipq.backend.dto.order.OrderResponse;
+
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -134,6 +135,13 @@ public OrderResponse getActiveOrder(
             @RequestParam Long studentId) {
 
         return orderService.getCurrentServingToken(studentId);
+    }
+
+    @GetMapping("/queue/college/{collegeCode}")
+    public PreLoginQueueDTO getPreLoginQueue(
+            @PathVariable String collegeCode) {
+
+        return orderService.getPreLoginQueueByCollegeCode(collegeCode);
     }
 
     @GetMapping("/search")

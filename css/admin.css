@@ -758,3 +758,77 @@ select.input {
 .inventory-row-out {
     background-color: #fdecea;
 }
+
+
+.order-item-line{
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    margin-bottom:4px;
+
+    font-size:14px;
+}
+
+.order-item-more{
+
+    color:#6b7280;
+
+    font-size:13px;
+
+    font-style:italic;
+}
+.order-item-line{
+    margin-bottom:4px;
+    line-height:1.4;
+}
+
+.hidden-order-items{
+    margin-top:4px;
+}
+
+.show-more-items{
+    border:none;
+    background:none;
+    color:#2e7d32;
+    font-size:13px;
+    cursor:pointer;
+    padding:2px 0;
+    font-weight:600;
+}
+
+.show-more-items:hover{
+    text-decoration:underline;
+}
+/* ==========================================
+   Back to student login
+========================================== */
+
+.admin-back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    margin-top:10px;
+
+    padding:10px 16px;
+
+    border-radius:10px;
+
+    background:#f4f7f5;
+
+    color:var(--color-primary);
+
+    font-weight:600;
+
+    transition:.2s ease;
+}
+
+.admin-back-link:hover{
+    background:#e7f3ec;
+    transform:translateX(-3px);
+    text-decoration:none;
+}

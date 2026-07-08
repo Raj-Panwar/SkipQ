@@ -101,6 +101,7 @@ function init() {
   });
 
   ordersTableBody.addEventListener("click", handleOrderAction);
+  ordersTableBody.addEventListener("click", handleShowMore);
   printTableBody.addEventListener("click", handlePrintAction);
 }
 
@@ -352,14 +353,47 @@ function buildOrderRow(order) {
 }
 
 function buildItemsSummary(items) {
-  if (!items || items.length === 0) return "—";
-  return items
-    .map((i) =>
-      i.itemType === "print"
-        ? `Print: ${i.fileName ?? i.productName ?? "document"}`
-        : `${i.quantity}× ${i.productName ?? "item"}`
-    )
-    .join(", ");
+
+    if (!items?.length) return "—";
+
+    const visible = items.slice(0, 3);
+    const hidden = items.slice(3);
+
+    const visibleHtml = visible.map(renderOrderItem).join("");
+
+    if (hidden.length === 0) {
+        return visibleHtml;
+    }
+
+    const hiddenHtml = hidden
+        .map(renderOrderItem)
+        .join("");
+
+    return `
+        ${visibleHtml}
+
+        <div class="hidden-order-items" hidden>
+            ${hiddenHtml}
+        </div>
+
+        <button
+            class="show-more-items"
+            data-count="${hidden.length}">
+            +${hidden.length} more...
+        </button>
+    `;
+}
+function renderOrderItem(item) {
+
+    if (item.itemType === "print") {
+        return `<div class="order-item-line">
+            📄 ${item.originalFileName ?? item.fileName ?? "Document"}
+        </div>`;
+    }
+
+    return `<div class="order-item-line">
+        ${item.quantity}× ${item.productName}
+    </div>`;
 }
 
 // Status action buttons — visual only until backend adds PATCH endpoint.
@@ -386,7 +420,22 @@ async function handleOrderAction(event) {
     showToast(error.message, "error");
   }
 }
+function handleShowMore(event) {
 
+    const btn = event.target.closest(".show-more-items");
+
+    if (!btn) return;
+
+    const hidden = btn.previousElementSibling;
+
+    const expanded = !hidden.hidden;
+
+    hidden.hidden = expanded;
+
+    btn.textContent = expanded
+        ? `+${btn.dataset.count} more...`
+        : "Show less";
+}
 // ---------------------------------------------------------------------------
 // Print jobs table
 // Extract items with itemType === "print" across all orders.

@@ -1,3 +1,4 @@
+
 // js/student/orderApi.js
 import { getSession } from "../shared/auth.js";
 
@@ -57,6 +58,11 @@ export function getCurrentServingToken() {
         `${BASE_URL}/queue/current-serving?studentId=${student.id}`
     );
 }
+
+export function getPreLoginQueue(collegeCode) {
+  return request(`${BASE_URL}/queue/college/${encodeURIComponent(collegeCode)}`);
+}
+
 export function getCurrentWaitEstimate() {
 
     const student = getSession();
