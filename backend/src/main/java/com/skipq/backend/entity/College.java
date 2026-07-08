@@ -68,6 +68,8 @@ public class College {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    @Column(name = "last_allocated_token", nullable = false)
+    private Integer lastAllocatedToken = 0;
 
     public College() {
     }
@@ -184,5 +186,13 @@ public class College {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Integer getLastAllocatedToken() {
+        return lastAllocatedToken;
+    }
+
+    public void setLastAllocatedToken(Integer lastAllocatedToken) {
+        this.lastAllocatedToken = lastAllocatedToken;
     }
 }

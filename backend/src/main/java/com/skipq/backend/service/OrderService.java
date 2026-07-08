@@ -8,7 +8,7 @@ import com.skipq.backend.dto.CreateOrderItemRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import com.skipq.backend.exception.OrderCancellationException;
+
 import com.skipq.backend.exception.OrderNotFoundException;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.QueueInfoDTO;
@@ -41,6 +41,7 @@ public class OrderService {
     private final NotificationService notificationService;
     private final WaitTimeService waitTimeService;
     private final OrderMapper orderMapper;
+    private final TokenAllocationService tokenAllocationService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -48,6 +49,7 @@ public class OrderService {
             StudentRepository studentRepository,
             NotificationService notificationService,
             WaitTimeService waitTimeService,
+            TokenAllocationService tokenAllocationService,
             OrderMapper orderMapper) {
 
         this.orderRepository = orderRepository;
@@ -56,6 +58,7 @@ public class OrderService {
         this.notificationService = notificationService;
         this.waitTimeService = waitTimeService;
         this.orderMapper = orderMapper;
+        this.tokenAllocationService = tokenAllocationService;
 
     }
 
@@ -91,7 +94,7 @@ public class OrderService {
                     order.setReadyAt(now);
                 }
 
-                waitTimeService.invalidateCache();
+                waitTimeService.invalidateCache(order.getCollege().getId());
                 break;
 
             case "COMPLETED":
@@ -232,12 +235,10 @@ public class OrderService {
             }
         }
         // 6. Generate college-specific token
-        Long collegeId = order.getCollege().getId();
+        // Generate college-specific token
+        Integer token = tokenAllocationService.allocateNextToken(order.getCollege());
 
-        Integer lastToken = orderRepository.findMaxTokenNumberByCollegeId(collegeId);
-
-        order.setTokenNumber(lastToken + 1);
-
+        order.setTokenNumber(token);
         // 7. Set total and save Order — CascadeType.ALL saves OrderItems too
         order.setTotalAmount(totalAmount);
 
@@ -282,7 +283,7 @@ public class OrderService {
                 collegeId,
                 order.getTokenNumber());
 
-        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
 
         Integer estimatedWait = (avgPrepMinutes == null)
                 ? null
@@ -306,7 +307,7 @@ public class OrderService {
 
         long ordersAhead = orderRepository.countActiveOrdersByCollegeId(collegeId);
 
-        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes();
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
 
         Integer estimatedWait = (avgPrepMinutes == null)
                 ? null
@@ -339,17 +340,16 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-public OrderResponse getActiveOrder(Long studentId) {
+    public OrderResponse getActiveOrder(Long studentId) {
 
-    List<Order> activeOrders =
-            orderRepository.findActiveOrdersByStudentId(studentId);
+        List<Order> activeOrders = orderRepository.findActiveOrdersByStudentId(studentId);
 
-    if (activeOrders.isEmpty()) {
-        throw new NoActiveOrderException("No active order found.");
+        if (activeOrders.isEmpty()) {
+            throw new NoActiveOrderException("No active order found.");
+        }
+
+        return orderMapper.toResponse(activeOrders.get(0));
     }
-
-    return orderMapper.toResponse(activeOrders.get(0));
-}
 
     @Transactional(readOnly = true)
     public Page<OrderResponse> searchOrders(

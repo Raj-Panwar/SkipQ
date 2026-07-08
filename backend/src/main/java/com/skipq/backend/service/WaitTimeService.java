@@ -3,6 +3,8 @@ package com.skipq.backend.service;
 import com.skipq.backend.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class WaitTimeService {
 
@@ -10,39 +12,66 @@ public class WaitTimeService {
 
     private final OrderRepository orderRepository;
 
-    private volatile Double cachedAvgMinutes = null; // null = not enough data yet
-    private volatile long lastComputedAt = 0;
+    /**
+     * Key = collegeId
+     * Value = average preparation time (minutes)
+     */
+    private final ConcurrentHashMap<Long, Double> averageCache = new ConcurrentHashMap<>();
+
+    /**
+     * Key = collegeId
+     * Value = cache creation timestamp
+     */
+    private final ConcurrentHashMap<Long, Long> timestampCache = new ConcurrentHashMap<>();
 
     public WaitTimeService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
     }
 
     /**
-     * Average preparation duration in minutes, based on historical
-     * PREPARING -> READY transitions. Returns null if no data exists yet
-     * (cold start) rather than a fabricated default.
+     * Returns the cached average preparation time for the given college.
+     * Recomputes it if the cache has expired or doesn't exist yet.
      */
-    public Double getAveragePreparationMinutes() {
+    public Double getAveragePreparationMinutes(Long collegeId) {
+
         long now = System.currentTimeMillis();
 
-        // Recompute if cache expired, or if we've never had valid data
-        // (so a fresh completed order is picked up quickly instead of
-        // being stuck behind a stale "no data" cache).
-        if (cachedAvgMinutes == null || (now - lastComputedAt) > CACHE_TTL_MS) {
-            recompute();
+        Double cachedAverage = averageCache.get(collegeId);
+        Long cachedAt = timestampCache.get(collegeId);
+
+        if (cachedAverage == null
+                || cachedAt == null
+                || (now - cachedAt) > CACHE_TTL_MS) {
+
+            recompute(collegeId);
+
+            cachedAverage = averageCache.get(collegeId);
+        }
+        cachedAverage = averageCache.get(collegeId);
+        return cachedAverage;
+    }
+
+    /**
+     * Invalidates the cache for a single college.
+     */
+    public void invalidateCache(Long collegeId) {
+        averageCache.remove(collegeId);
+        timestampCache.remove(collegeId);
+    }
+
+    /**
+     * Recomputes the average preparation time for one college only.
+     */
+    private synchronized void recompute(Long collegeId) {
+
+        Double avgSeconds = orderRepository.findAveragePreparationSecondsByCollegeId(collegeId);
+
+        if (avgSeconds == null) {
+            averageCache.remove(collegeId);
+        } else {
+            averageCache.put(collegeId, avgSeconds / 60.0);
         }
 
-        return cachedAvgMinutes;
+        timestampCache.put(collegeId, System.currentTimeMillis());
     }
-    public void invalidateCache() {
-    cachedAvgMinutes = null;
-    lastComputedAt = 0;
-}
-
-    private synchronized void recompute() {
-        Double avgSeconds = orderRepository.findAveragePreparationSeconds();
-        cachedAvgMinutes = (avgSeconds == null) ? null : avgSeconds / 60.0;
-        lastComputedAt = System.currentTimeMillis();
-    }
-    
 }
