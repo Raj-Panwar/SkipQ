@@ -2,6 +2,7 @@ package com.skipq.backend.service;
 
 import com.skipq.backend.entity.Notification;
 import com.skipq.backend.entity.Order;
+import com.skipq.backend.entity.Product;
 import com.skipq.backend.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +17,14 @@ public class NotificationService {
     private static final Set<String> NOTIFIABLE_STATUSES = Set.of("READY", "COMPLETED", "CANCELLED");
 
     private final NotificationRepository notificationRepository;
+    private final AdminService adminService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            AdminService adminService) {
+
         this.notificationRepository = notificationRepository;
+        this.adminService = adminService;
     }
 
     @Transactional
@@ -35,11 +41,44 @@ public class NotificationService {
         String message = buildMessage(order.getTokenNumber(), newStatus);
 
         Notification notification = new Notification(
-        order.getStudent(),
-        order,
-        newStatus,
-        message
-);
+                order.getStudent(),
+                order,
+                newStatus,
+                message);
+
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void notifyNewOrder(Order order) {
+
+        String message = "New order received. Token #" + order.getTokenNumber();
+
+        Notification notification = new Notification(
+                order.getCollege(),
+                order,
+                "NEW_ORDER",
+                message);
+
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void notifyOrderCancelled(Order order) {
+ 
+
+        String message = order.getStudent().getFullName()
+                + " cancelled Token #"
+                + order.getTokenNumber();
+
+        Notification notification = new Notification(
+
+                order.getCollege(),
+                order,
+                "ORDER_CANCELLED",
+                message
+
+        );
 
         notificationRepository.save(notification);
     }
@@ -56,22 +95,22 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotificationsForStudent(Long studentId) {
 
-    return notificationRepository
-            .findByStudent_IdOrderByCreatedAtDesc(studentId)
-            .stream()
-            .map(notification -> new NotificationResponse(
+        return notificationRepository
+                .findByStudent_IdOrderByCreatedAtDesc(studentId)
+                .stream()
+                .map(notification -> new NotificationResponse(
 
-                    notification.getId(),
-                    notification.getOrder().getId(),
-                    notification.getOrder().getTokenNumber(),
-                    notification.getType(),
-                    notification.getMessage(),
-                    notification.isRead(),
-                    notification.getCreatedAt()
+                        notification.getId(),
+                        notification.getOrder().getId(),
+                        notification.getOrder().getTokenNumber(),
+                        notification.getType(),
+                        notification.getMessage(),
+                        notification.isRead(),
+                        notification.getCreatedAt()
 
-            ))
-            .toList();
-}
+                ))
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public long getUnreadCount(Long studentId) {
@@ -89,5 +128,95 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(Long studentId) {
         notificationRepository.markAllAsReadForStudent(studentId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotificationsForCollege(Long collegeId) {
+
+        return notificationRepository
+                .findByCollege_IdAndStudentIsNullOrderByCreatedAtDesc(collegeId)
+                .stream()
+                .map(notification -> new NotificationResponse(
+                        notification.getId(),
+                        notification.getOrder() != null ? notification.getOrder().getId() : null,
+                        notification.getOrder() != null ? notification.getOrder().getTokenNumber() : null,
+                        notification.getType(),
+                        notification.getMessage(),
+                        notification.isRead(),
+                        notification.getCreatedAt()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCountForCollege(Long collegeId) {
+        return notificationRepository.countByCollege_IdAndStudentIsNullAndReadFalse(collegeId);
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCountForAdmin(Long adminId) {
+
+        Long collegeId = adminService
+                .getAdminById(adminId)
+                .getCollege()
+                .getId();
+
+        return getUnreadCountForCollege(collegeId);
+    }
+
+    @Transactional
+    public void markAllAsReadForCollege(Long collegeId) {
+        notificationRepository.markAllAsReadForCollege(collegeId);
+    }
+
+    @Transactional
+    public void markAllAsReadForAdmin(Long adminId) {
+
+        Long collegeId = adminService
+                .getAdminById(adminId)
+                .getCollege()
+                .getId();
+
+        markAllAsReadForCollege(collegeId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotificationsForAdmin(Long adminId) {
+
+        Long collegeId = adminService
+                .getAdminById(adminId)
+                .getCollege()
+                .getId();
+
+        return getNotificationsForCollege(collegeId);
+    }
+
+    @Transactional
+    public void notifyLowStock(Product product) {
+
+        Notification notification = new Notification(
+
+                product.getCollege(),
+                null,
+                "LOW_STOCK",
+                product.getName() + " is running low (" + product.getStock() + " left)."
+
+        );
+
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void notifyOutOfStock(Product product) {
+
+        Notification notification = new Notification(
+
+                product.getCollege(),
+                null,
+                "OUT_OF_STOCK",
+                product.getName() + " is out of stock."
+
+        );
+
+        notificationRepository.save(notification);
     }
 }

@@ -1,0 +1,2 @@
+ALTER TABLE notifications
+MODIFY COLUMN order_id BIGINT NULL;

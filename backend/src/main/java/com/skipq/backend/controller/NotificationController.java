@@ -39,4 +39,32 @@ public class NotificationController {
         notificationService.markAllAsRead(studentId);
         return Map.of("message", "All notifications marked as read");
     }
+
+  @GetMapping("/admin")
+public List<NotificationResponse> getAdminNotifications(
+        @RequestHeader("X-Admin-Id") Long adminId) {
+
+    return notificationService.getNotificationsForAdmin(adminId);
+}
+
+    @GetMapping("/admin/unread-count")
+public Map<String, Long> getAdminUnreadCount(
+        @RequestHeader("X-Admin-Id") Long adminId) {
+
+    return Map.of(
+            "unreadCount",
+            notificationService.getUnreadCountForAdmin(adminId)
+    );
+}
+    @PutMapping("/admin/read-all")
+public Map<String, String> markAllAdminNotificationsAsRead(
+        @RequestHeader("X-Admin-Id") Long adminId) {
+
+    notificationService.markAllAsReadForAdmin(adminId);
+
+    return Map.of(
+            "message",
+            "All notifications marked as read"
+    );
+}
 }

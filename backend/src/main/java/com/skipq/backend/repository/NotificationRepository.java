@@ -10,6 +10,10 @@ import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
+    // =========================
+    // Student Notifications
+    // =========================
+
     List<Notification> findByStudent_IdOrderByCreatedAtDesc(Long studentId);
 
     long countByStudent_IdAndReadFalse(Long studentId);
@@ -22,4 +26,22 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             AND n.read = false
             """)
     void markAllAsReadForStudent(@Param("studentId") Long studentId);
+
+    // =========================
+    // Admin Notifications
+    // =========================
+
+    List<Notification> findByCollege_IdAndStudentIsNullOrderByCreatedAtDesc(Long collegeId);
+
+    long countByCollege_IdAndStudentIsNullAndReadFalse(Long collegeId);
+
+    @Modifying
+    @Query("""
+            UPDATE Notification n
+            SET n.read = true
+            WHERE n.college.id = :collegeId
+            AND n.student IS NULL
+            AND n.read = false
+            """)
+    void markAllAsReadForCollege(@Param("collegeId") Long collegeId);
 }

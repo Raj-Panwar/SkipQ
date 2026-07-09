@@ -12,14 +12,14 @@ public class Notification {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_id", nullable = true)
     private Student student;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "college_id")
     private College college;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id")
     private Order order;
 
     @Column(nullable = false)
@@ -41,15 +41,27 @@ public class Notification {
 
     public Notification() {
     }
+    public Notification(
+        Student student,
+        Order order,
+        String type,
+        String message
+) {
+    this.student = student;
+    this.order = order;
+    this.college = order.getCollege();
+    this.type = type;
+    this.message = message;
+}
 
-    public Notification(Student student,
+    public Notification(
+            College college,
             Order order,
             String type,
             String message) {
-        this.student = student;
+        this.student = null;
+        this.college = college;
         this.order = order;
-        this.college = order.getCollege();
-
         this.type = type;
         this.message = message;
     }

@@ -1,0 +1,2 @@
+ALTER TABLE notifications
+MODIFY COLUMN student_id BIGINT NULL;

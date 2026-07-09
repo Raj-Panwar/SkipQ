@@ -1,8 +1,10 @@
 package com.skipq.backend.service;
+
 import com.skipq.backend.entity.Student;
 import com.skipq.backend.exception.NoActiveOrderException;
 import com.skipq.backend.exception.OrderCancellationException;
 import com.skipq.backend.repository.StudentRepository;
+import com.skipq.backend.constants.InventoryConstants;
 import com.skipq.backend.dto.CreateOrderItemRequest;
 import com.skipq.backend.dto.college.CollegeResponse;
 import org.springframework.data.domain.Page;
@@ -29,361 +31,378 @@ import java.time.LocalDateTime;
 import java.util.List;
 import com.skipq.backend.mapper.OrderMapper;
 import com.skipq.backend.dto.order.OrderResponse;
+
 @Service
 public class OrderService {
-private final OrderRepository orderRepository;
-private final ProductRepository productRepository;
-private final StudentRepository studentRepository;
-private final NotificationService notificationService;
-private final WaitTimeService waitTimeService;
-private final CollegeService collegeService;
-private final OrderMapper orderMapper;
-private final TokenAllocationService tokenAllocationService;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final StudentRepository studentRepository;
+    private final NotificationService notificationService;
+    private final WaitTimeService waitTimeService;
+    private final CollegeService collegeService;
+    private final OrderMapper orderMapper;
+    private final TokenAllocationService tokenAllocationService;
 
-public OrderService(
-        OrderRepository orderRepository,
-        ProductRepository productRepository,
-        StudentRepository studentRepository,
-        NotificationService notificationService,
-        WaitTimeService waitTimeService,
-        CollegeService collegeService,
-        TokenAllocationService tokenAllocationService,
-        OrderMapper orderMapper) {
+    public OrderService(
+            OrderRepository orderRepository,
+            ProductRepository productRepository,
+            StudentRepository studentRepository,
+            NotificationService notificationService,
+            WaitTimeService waitTimeService,
+            CollegeService collegeService,
+            TokenAllocationService tokenAllocationService,
+            OrderMapper orderMapper) {
 
-    this.orderRepository = orderRepository;
-    this.productRepository = productRepository;
-    this.studentRepository = studentRepository;
-    this.notificationService = notificationService;
-    this.waitTimeService = waitTimeService;
-    this.collegeService = collegeService;
-    this.orderMapper = orderMapper;
-    this.tokenAllocationService = tokenAllocationService;
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.studentRepository = studentRepository;
+        this.notificationService = notificationService;
+        this.waitTimeService = waitTimeService;
+        this.collegeService = collegeService;
+        this.orderMapper = orderMapper;
+        this.tokenAllocationService = tokenAllocationService;
 
-}
-
-@Transactional
-public OrderResponse updateStatus(Long id,
-        Long collegeId,
-        String status) {
-
-    Order order = orderRepository
-            .findByIdAndCollegeId(id, collegeId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
-
-    String previousStatus = order.getStatus();
-
-    // Prevent duplicate updates and notifications
-    if (status.equals(previousStatus)) {
-        return orderMapper.toResponse(order);
     }
 
-    order.setStatus(status);
+    @Transactional
+    public OrderResponse updateStatus(Long id,
+            Long collegeId,
+            String status) {
 
-    LocalDateTime now = LocalDateTime.now();
+        Order order = orderRepository
+                .findByIdAndCollegeId(id, collegeId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-    switch (status) {
-        case "PREPARING":
-            if (order.getPreparingAt() == null) {
-                order.setPreparingAt(now);
-            }
-            break;
+        String previousStatus = order.getStatus();
 
-        case "READY":
-            if (order.getReadyAt() == null) {
-                order.setReadyAt(now);
-            }
-
-            waitTimeService.invalidateCache(order.getCollege().getId());
-            break;
-
-        case "COMPLETED":
-            if (order.getCompletedAt() == null) {
-                order.setCompletedAt(now);
-            }
-            break;
-    }
-    Order saved = orderRepository.save(order);
-
-    notificationService.notifyStatusChange(saved, status);
-
-    return orderMapper.toResponse(saved);
-}
-
-@Transactional
-public OrderResponse cancelOrder(Long orderId, Long studentId) {
-
-    Order order = orderRepository.findByIdAndStudentId(orderId, studentId)
-            .orElseThrow(() -> new OrderNotFoundException(
-                    "Order not found or does not belong to the student"));
-    if (!"PLACED".equals(order.getStatus())) {
-        throw new OrderCancellationException(
-                "Only placed orders can be cancelled.");
-    }
-
-    // Restore Stock
-    for (OrderItem item : order.getItems()) {
-
-        if (!"stationery".equals(item.getItemType())) {
-            continue;
+        // Prevent duplicate updates and notifications
+        if (status.equals(previousStatus)) {
+            return orderMapper.toResponse(order);
         }
 
-        Product product = productRepository.findById(item.getProductId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Product not found: " + item.getProductId()));
+        order.setStatus(status);
 
-        product.setStock(
-                product.getStock() + item.getQuantity());
+        LocalDateTime now = LocalDateTime.now();
 
-        productRepository.save(product);
-    }
-    order.setStatus("CANCELLED");
+        switch (status) {
+            case "PREPARING":
+                if (order.getPreparingAt() == null) {
+                    order.setPreparingAt(now);
+                }
+                break;
 
-    Order cancelledOrder = orderRepository.save(order);
-    notificationService.notifyStatusChange(
-            cancelledOrder,
-            "CANCELLED");
+            case "READY":
+                if (order.getReadyAt() == null) {
+                    order.setReadyAt(now);
+                }
 
-    return orderMapper.toResponse(cancelledOrder);
-}
+                waitTimeService.invalidateCache(order.getCollege().getId());
+                break;
 
-@Transactional
-public OrderResponse createOrder(CreateOrderRequest request) {
+            case "COMPLETED":
+                if (order.getCompletedAt() == null) {
+                    order.setCompletedAt(now);
+                }
+                break;
+        }
+        Order saved = orderRepository.save(order);
 
-    Order order = new Order();
+        notificationService.notifyStatusChange(saved, status);
 
-    if (request.getStudentId() != null) {
-
-        Student student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        order.setStudent(student);
-        order.setCollege(student.getCollege());
-
-        order.setStudentName(student.getFullName());
-
-    } else {
-
-        order.setStudentName(
-                request.getStudentName() != null
-                        ? request.getStudentName()
-                        : "Guest");
+        return orderMapper.toResponse(saved);
     }
 
-    order.setStatus("PLACED");
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, Long studentId) {
 
-    BigDecimal totalAmount = BigDecimal.ZERO;
+        Order order = orderRepository.findByIdAndStudentId(orderId, studentId)
+                .orElseThrow(() -> new OrderNotFoundException(
+                        "Order not found or does not belong to the student"));
+        if (!"PLACED".equals(order.getStatus())) {
+            throw new OrderCancellationException(
+                    "Only placed orders can be cancelled.");
+        }
 
-    for (CreateOrderItemRequest itemRequest : request.getItems()) {
+        // Restore Stock
+        for (OrderItem item : order.getItems()) {
 
-        if ("print".equals(itemRequest.getItemType())) {
+            if (!"stationery".equals(item.getItemType())) {
+                continue;
+            }
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Product not found: " + item.getProductId()));
 
-            orderItem.setItemType("print");
-            orderItem.setFileName(itemRequest.getFileName());
-            orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
-            orderItem.setPages(itemRequest.getPages());
-            orderItem.setCopies(itemRequest.getCopies());
-            orderItem.setColorMode(itemRequest.getColorMode());
-            orderItem.setSided(itemRequest.getSided());
-            orderItem.setPaperSize(itemRequest.getPaperSize());
+            product.setStock(
+                    product.getStock() + item.getQuantity());
 
-            orderItem.setProductName("Print Job");
-            orderItem.setQuantity(1);
+            productRepository.save(product);
+        }
+        order.setStatus("CANCELLED");
 
-            BigDecimal price = BigDecimal.valueOf(itemRequest.getTotalPrice());
+        Order cancelledOrder = orderRepository.save(order);
+        notificationService.notifyStatusChange(
+                cancelledOrder,
+                "CANCELLED");
+        notificationService.notifyOrderCancelled(cancelledOrder);
 
-            orderItem.setPrice(price);
 
-            order.getItems().add(orderItem);
+        return orderMapper.toResponse(cancelledOrder);
+    }
 
-            totalAmount = totalAmount.add(price);
+    @Transactional
+    public OrderResponse createOrder(CreateOrderRequest request) {
+
+        Order order = new Order();
+
+        if (request.getStudentId() != null) {
+
+            Student student = studentRepository.findById(request.getStudentId())
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
+
+            order.setStudent(student);
+            order.setCollege(student.getCollege());
+
+            order.setStudentName(student.getFullName());
 
         } else {
 
-            Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Product not found with id: " + itemRequest.getProductId()));
-
-            if (product.getStock() < itemRequest.getQuantity()) {
-                throw new RuntimeException(
-                        "Insufficient stock for product: " + product.getName()
-                                + ". Available: " + product.getStock()
-                                + ", Requested: " + itemRequest.getQuantity());
-            }
-
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-
-            orderItem.setItemType("stationery");
-            orderItem.setProductId(product.getId());
-            orderItem.setProductName(product.getName());
-            orderItem.setQuantity(itemRequest.getQuantity());
-            orderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
-
-            order.getItems().add(orderItem);
-
-            BigDecimal lineTotal = BigDecimal.valueOf(product.getPrice())
-                    .multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
-
-            totalAmount = totalAmount.add(lineTotal);
-
-            product.setStock(product.getStock() - itemRequest.getQuantity());
-            productRepository.save(product);
+            order.setStudentName(
+                    request.getStudentName() != null
+                            ? request.getStudentName()
+                            : "Guest");
         }
-    }
-    // 6. Generate college-specific token
-    // Generate college-specific token
-    Integer token = tokenAllocationService.allocateNextToken(order.getCollege());
 
-    order.setTokenNumber(token);
-    // 7. Set total and save Order â€” CascadeType.ALL saves OrderItems too
-    order.setTotalAmount(totalAmount);
+        order.setStatus("PLACED");
 
-    Order saved = orderRepository.save(order);
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
-    return orderMapper.toResponse(saved);
-}
+        for (CreateOrderItemRequest itemRequest : request.getItems()) {
 
-@Transactional(readOnly = true)
-public List<OrderResponse> getAllOrders(Long collegeId) {
-    return orderRepository
-            .findAllByCollegeIdOrderByCreatedAtDesc(collegeId)
-            .stream()
-            .map(orderMapper::toResponse)
-            .toList();
-}
+            if ("print".equals(itemRequest.getItemType())) {
 
-@Transactional(readOnly = true)
-public OrderResponse getOrderById(Long id) {
-    Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(
-                    "Order not found with id: " + id));
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
 
-    return orderMapper.toResponse(order);
-}
+                orderItem.setItemType("print");
+                orderItem.setFileName(itemRequest.getFileName());
+                orderItem.setOriginalFileName(itemRequest.getOriginalFileName());
+                orderItem.setPages(itemRequest.getPages());
+                orderItem.setCopies(itemRequest.getCopies());
+                orderItem.setColorMode(itemRequest.getColorMode());
+                orderItem.setSided(itemRequest.getSided());
+                orderItem.setPaperSize(itemRequest.getPaperSize());
 
-@Transactional(readOnly = true)
-public QueueInfoDTO getQueueInfo(Long orderId) {
+                orderItem.setProductName("Print Job");
+                orderItem.setQuantity(1);
 
-    Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+                BigDecimal price = BigDecimal.valueOf(itemRequest.getTotalPrice());
 
-    Long collegeId = order.getCollege().getId();
+                orderItem.setPrice(price);
 
-    Integer currentServing = orderRepository.findCurrentServingTokenByCollegeId(collegeId);
+                order.getItems().add(orderItem);
 
-    if (currentServing == null) {
-        currentServing = order.getTokenNumber();
-    }
+                totalAmount = totalAmount.add(price);
 
-    int peopleAhead = (int) orderRepository.countPeopleAheadByCollegeId(
-            collegeId,
-            order.getTokenNumber());
+            } else {
 
-    Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
+                Product product = productRepository.findById(itemRequest.getProductId())
+                        .orElseThrow(() -> new RuntimeException(
+                                "Product not found with id: " + itemRequest.getProductId()));
 
-    Integer estimatedWait = (avgPrepMinutes == null)
-            ? null
-            : (int) Math.ceil(peopleAhead * avgPrepMinutes);
+                if (product.getStock() < itemRequest.getQuantity()) {
+                    throw new RuntimeException(
+                            "Insufficient stock for product: " + product.getName()
+                                    + ". Available: " + product.getStock()
+                                    + ", Requested: " + itemRequest.getQuantity());
+                }
 
-    return new QueueInfoDTO(
-            order.getTokenNumber(),
-            order.getStatus(),
-            currentServing,
-            peopleAhead,
-            estimatedWait);
-}
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
 
-@Transactional(readOnly = true)
-public WaitEstimateDTO getCurrentWaitEstimate(Long studentId) {
+                orderItem.setItemType("stationery");
+                orderItem.setProductId(product.getId());
+                orderItem.setProductName(product.getName());
+                orderItem.setQuantity(itemRequest.getQuantity());
+                orderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
 
-    Student student = studentRepository.findById(studentId)
-            .orElseThrow(() -> new RuntimeException("Student not found"));
+                order.getItems().add(orderItem);
 
-    Long collegeId = student.getCollege().getId();
+                BigDecimal lineTotal = BigDecimal.valueOf(product.getPrice())
+                        .multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
 
-    long ordersAhead = orderRepository.countActiveOrdersByCollegeId(collegeId);
+                totalAmount = totalAmount.add(lineTotal);
 
-    Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
+                product.setStock(product.getStock() - itemRequest.getQuantity());
 
-    Integer estimatedWait = (avgPrepMinutes == null)
-            ? null
-            : (int) Math.ceil(ordersAhead * avgPrepMinutes);
+                productRepository.save(product);
 
-    return new WaitEstimateDTO(
-            ordersAhead,
-            estimatedWait);
-}
+                if (product.getStock() == 0) {
+    
 
-@Transactional(readOnly = true)
-public Integer getCurrentServingToken(Long studentId) {
+                    notificationService.notifyOutOfStock(product);
 
-    Student student = studentRepository.findById(studentId)
-            .orElseThrow(() -> new RuntimeException("Student not found"));
+                } else if (product.getStock() <= InventoryConstants.LOW_STOCK_THRESHOLD) {
+                    
 
-    Long collegeId = student.getCollege().getId();
+                    notificationService.notifyLowStock(product);
 
-    return orderRepository.findCurrentServingTokenByCollegeId(collegeId);
-}
+                }
+            }
+        }
+        // 6. Generate college-specific token
+        // Generate college-specific token
+        Integer token = tokenAllocationService.allocateNextToken(order.getCollege());
 
-@Transactional(readOnly = true)
-public PreLoginQueueDTO getPreLoginQueueByCollegeCode(String collegeCode) {
+        order.setTokenNumber(token);
+        // 7. Set total and save Order â€” CascadeType.ALL saves OrderItems too
+        order.setTotalAmount(totalAmount);
 
-    CollegeResponse college = collegeService.getCollegeByCode(collegeCode);
+        Order saved = orderRepository.save(order);
 
-    Integer currentServing = orderRepository.findCurrentServingTokenByCollegeId(college.getId());
-    List<Integer> queueTokens =
-        orderRepository.findActiveTokenNumbersByCollegeId(college.getId());
+        notificationService.notifyNewOrder(saved);
 
-    return new PreLoginQueueDTO(currentServing, queueTokens);
-}
-
-@Transactional(readOnly = true)
-public List<OrderResponse> getOrdersByStudent(Long studentId) {
-
-    return orderRepository
-            .findByStudentIdOrderByCreatedAtDesc(studentId)
-            .stream()
-            .map(orderMapper::toResponse)
-            .toList();
-}
-
-@Transactional(readOnly = true)
-public OrderResponse getActiveOrder(Long studentId) {
-
-    List<Order> activeOrders = orderRepository.findActiveOrdersByStudentId(studentId);
-
-    if (activeOrders.isEmpty()) {
-        throw new NoActiveOrderException("No active order found.");
+        return orderMapper.toResponse(saved);
     }
 
-    return orderMapper.toResponse(activeOrders.get(0));
-}
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders(Long collegeId) {
+        return orderRepository
+                .findAllByCollegeIdOrderByCreatedAtDesc(collegeId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
+    }
 
-@Transactional(readOnly = true)
-public Page<OrderResponse> searchOrders(
-        Long collegeId,
-        String query,
-        String status,
-        LocalDate date,
-        String sort,
-        int page,
-        int size) {
-    Specification<Order> spec = Specification
-            .where(OrderSpecifications.belongsToCollege(collegeId))
-            .and(OrderSpecifications.matchesQuery(query))
-            .and(OrderSpecifications.hasStatus(status))
-            .and(OrderSpecifications.createdOnDate(date));
-    Sort sortOrder = "oldest".equalsIgnoreCase(sort)
-            ? Sort.by("createdAt").ascending()
-            : Sort.by("createdAt").descending();
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(
+                        "Order not found with id: " + id));
 
-    Pageable pageable = PageRequest.of(page, size, sortOrder);
+        return orderMapper.toResponse(order);
+    }
 
-    return orderRepository
-            .findAll(spec, pageable)
-            .map(orderMapper::toResponse);
-}
+    @Transactional(readOnly = true)
+    public QueueInfoDTO getQueueInfo(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Long collegeId = order.getCollege().getId();
+
+        Integer currentServing = orderRepository.findCurrentServingTokenByCollegeId(collegeId);
+
+        if (currentServing == null) {
+            currentServing = order.getTokenNumber();
+        }
+
+        int peopleAhead = (int) orderRepository.countPeopleAheadByCollegeId(
+                collegeId,
+                order.getTokenNumber());
+
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
+
+        Integer estimatedWait = (avgPrepMinutes == null)
+                ? null
+                : (int) Math.ceil(peopleAhead * avgPrepMinutes);
+
+        return new QueueInfoDTO(
+                order.getTokenNumber(),
+                order.getStatus(),
+                currentServing,
+                peopleAhead,
+                estimatedWait);
+    }
+
+    @Transactional(readOnly = true)
+    public WaitEstimateDTO getCurrentWaitEstimate(Long studentId) {
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        Long collegeId = student.getCollege().getId();
+
+        long ordersAhead = orderRepository.countActiveOrdersByCollegeId(collegeId);
+
+        Double avgPrepMinutes = waitTimeService.getAveragePreparationMinutes(collegeId);
+
+        Integer estimatedWait = (avgPrepMinutes == null)
+                ? null
+                : (int) Math.ceil(ordersAhead * avgPrepMinutes);
+
+        return new WaitEstimateDTO(
+                ordersAhead,
+                estimatedWait);
+    }
+
+    @Transactional(readOnly = true)
+    public Integer getCurrentServingToken(Long studentId) {
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        Long collegeId = student.getCollege().getId();
+
+        return orderRepository.findCurrentServingTokenByCollegeId(collegeId);
+    }
+
+    @Transactional(readOnly = true)
+    public PreLoginQueueDTO getPreLoginQueueByCollegeCode(String collegeCode) {
+
+        CollegeResponse college = collegeService.getCollegeByCode(collegeCode);
+
+        Integer currentServing = orderRepository.findCurrentServingTokenByCollegeId(college.getId());
+        List<Integer> queueTokens = orderRepository.findActiveTokenNumbersByCollegeId(college.getId());
+
+        return new PreLoginQueueDTO(currentServing, queueTokens);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByStudent(Long studentId) {
+
+        return orderRepository
+                .findByStudentIdOrderByCreatedAtDesc(studentId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getActiveOrder(Long studentId) {
+
+        List<Order> activeOrders = orderRepository.findActiveOrdersByStudentId(studentId);
+
+        if (activeOrders.isEmpty()) {
+            throw new NoActiveOrderException("No active order found.");
+        }
+
+        return orderMapper.toResponse(activeOrders.get(0));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> searchOrders(
+            Long collegeId,
+            String query,
+            String status,
+            LocalDate date,
+            String sort,
+            int page,
+            int size) {
+        Specification<Order> spec = Specification
+                .where(OrderSpecifications.belongsToCollege(collegeId))
+                .and(OrderSpecifications.matchesQuery(query))
+                .and(OrderSpecifications.hasStatus(status))
+                .and(OrderSpecifications.createdOnDate(date));
+        Sort sortOrder = "oldest".equalsIgnoreCase(sort)
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        return orderRepository
+                .findAll(spec, pageable)
+                .map(orderMapper::toResponse);
+    }
 }

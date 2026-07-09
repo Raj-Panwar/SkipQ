@@ -97,4 +97,11 @@ public class AdminService {
     return adminRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Admin not found"));
 }
+@Transactional(readOnly = true)
+public Admin getAdminById(Long adminId) {
+
+    return adminRepository.findById(adminId)
+            .orElseThrow(() ->
+                    new RuntimeException("Admin not found"));
+}
 }
