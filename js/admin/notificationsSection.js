@@ -168,16 +168,16 @@ function formatType(type){
     switch(type){
 
         case "NEW_ORDER":
-            return "📦 New Order";
+            return " New Order";
 
         case "LOW_STOCK":
-            return "⚠️ Low Stock";
+            return " Low Stock";
 
         case "OUT_OF_STOCK":
-            return "🚫 Out Of Stock";
+            return " Out Of Stock";
 
         case "ORDER_CANCELLED":
-            return "❌ Order Cancelled";
+            return " Order Cancelled";
 
         default:
             return type
