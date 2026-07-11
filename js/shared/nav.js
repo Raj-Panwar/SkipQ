@@ -8,25 +8,22 @@
 //   initStudentNav("menu");  // highlights the active item
 
 import { getCartCount } from "../student/cartStore.js";
-import { logout } from "./auth.js";
 
 const NAV_ITEMS = [
   { id: "menu",    label: "Menu",    href: "./menu.html",    icon: gridIcon() },
   { id: "cart",    label: "Cart",    href: "./cart.html",    icon: cartIcon() },
   { id: "token",   label: "Token",   href: "./token.html",   icon: tokenIcon() },
-  { id: "history", label: "History", href: "./history.html", icon: historyIcon() },
+  { id: "notifications", label: "Notifications", icon: bellIcon() },
+  { id: "profile", label: "Profile", href: "./profile.html", icon: profileIcon() },
 ];
 
 /**
  * Builds and injects the sticky bottom nav into the current page.
- * Also attaches the logout button handler if an element with
- * id="logoutBtn" exists on the page.
  *
- * @param {"menu"|"cart"|"token"|"history"|""} activeId
+ * @param {"menu"|"cart"|"token"|"notifications"|"profile"|""} activeId
  */
 export function initStudentNav(activeId = "") {
   injectBottomNav(activeId);
-  wireLogoutButtons();
 }
 
 function injectBottomNav(activeId) {
@@ -34,6 +31,7 @@ function injectBottomNav(activeId) {
   if (document.getElementById("studentBottomNav")) return;
 
   const cartCount = getCartCount();
+  const onMenuPage = /menu\.html$/.test(window.location.pathname);
 
   const nav = document.createElement("nav");
   nav.id = "studentBottomNav";
@@ -43,9 +41,26 @@ function injectBottomNav(activeId) {
   nav.innerHTML = NAV_ITEMS.map((item) => {
     const isActive = item.id === activeId;
     const isCart = item.id === "cart";
+    const isNotifications = item.id === "notifications";
     const badgeHtml = isCart && cartCount > 0
       ? `<span class="nav-badge" aria-label="${cartCount} items in cart">${cartCount}</span>`
       : "";
+
+    // The Notifications tab has no page of its own — it opens the
+    // existing bell dropdown (on the Menu page directly, or after
+    // navigating to the Menu page from anywhere else). Render it as a
+    // button rather than a link so we can control that behavior.
+    if (isNotifications) {
+      return `
+        <button type="button"
+           class="nav-tab ${isActive ? "is-active" : ""}"
+           data-nav-id="${item.id}"
+           id="navNotificationsBtn">
+          <span class="nav-tab-icon">${item.icon}</span>
+          <span class="nav-tab-label">${item.label}</span>
+        </button>
+      `;
+    }
 
     return `
       <a href="${item.href}"
@@ -56,12 +71,7 @@ function injectBottomNav(activeId) {
         <span class="nav-tab-label">${item.label}</span>
       </a>
     `;
-  }).join("") + `
-    <button type="button" class="nav-tab nav-tab-logout" id="navLogoutBtn" aria-label="Log out">
-      <span class="nav-tab-icon">${logoutIcon()}</span>
-      <span class="nav-tab-label">Logout</span>
-    </button>
-  `;
+  }).join("");
 
   document.body.appendChild(nav);
 
@@ -69,17 +79,13 @@ function injectBottomNav(activeId) {
   const main = document.querySelector(".app-main, main");
   if (main) main.classList.add("has-bottom-nav");
 
-  nav.querySelector("#navLogoutBtn").addEventListener("click", logout);
-}
-
-function wireLogoutButtons() {
-  // Also wire any in-page logout buttons the HTML defines explicitly
-  // (e.g. the desktop header logout link)
-  document.querySelectorAll("[data-logout]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      logout();
-    });
+  const notificationsBtn = document.getElementById("navNotificationsBtn");
+  notificationsBtn?.addEventListener("click", () => {
+    if (onMenuPage) {
+      document.getElementById("notificationBell")?.click();
+    } else {
+      window.location.href = "./menu.html?openNotifications=1";
+    }
   });
 }
 
@@ -109,17 +115,16 @@ function tokenIcon() {
   </svg>`;
 }
 
-function historyIcon() {
+function bellIcon() {
   return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M3.05 11a9 9 0 1 0 .5-3M3 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 3a5 5 0 0 0-5 5v2.3c0 .7-.2 1.3-.6 1.9L5 14.5V16h14v-1.5l-1.4-2.3c-.4-.6-.6-1.2-.6-1.9V8a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M10 19a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
   </svg>`;
 }
 
-function logoutIcon() {
+function profileIcon() {
   return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
   </svg>`;
 }

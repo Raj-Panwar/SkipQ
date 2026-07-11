@@ -1309,12 +1309,6 @@
 .nav-tab-label {
   line-height: 1;
 }
-.nav-tab-logout {
-  color: var(--color-error);
-}
-.nav-tab-logout:hover {
-  color: var(--color-error);
-}
 .nav-badge {
   position: absolute;
   top: -2px;
@@ -1350,6 +1344,64 @@
   }
   .cart-summary-bar {
     bottom: 0;
+  }
+}
+/* ---------------------------------------------------------------------- /
+/ Profile page                                                             /
+/ ---------------------------------------------------------------------- */
+.profile-header-card {
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--color-accent-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-1);
+}
+.profile-name {
+  font-size: 1.25rem;
+  color: var(--color-ink);
+}
+.profile-college {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+.profile-section-card {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.profile-section-title {
+  font-size: 1.0625rem;
+  color: var(--color-ink);
+}
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.input:disabled {
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+.empty-state-block-compact {
+  padding: var(--space-5) var(--space-3);
+}
+@media (max-width: 420px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
   }
 }
 /* ==========================================================================
@@ -1980,3 +2032,82 @@ transition:.3s;
     line-height:1.6;
 }
 
+
+/* ----------------------------------------------------------------------
+   Profile page
+---------------------------------------------------------------------- */
+
+.profile-header-card {
+    padding: var(--space-6) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--color-accent-soft);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-2);
+}
+
+.profile-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.profile-college {
+    color: var(--color-text-muted);
+    font-size: .9rem;
+}
+
+.profile-section-card {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.profile-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.input:disabled {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+}
+
+.empty-state-block-compact {
+    padding: var(--space-5);
+}
+
+.btn-logout {
+    width: 100%;
+    margin-top: var(--space-3);
+}
+
+@media (max-width:480px){
+
+    .form-row-2{
+
+        grid-template-columns:1fr;
+    }
+
+}

@@ -58,7 +58,18 @@ export function loginStudent(payload) {
 export function getStudentProfile(id) {
   return request(`${BASE_URL}/${id}`);
 }
-
+/**
+ * PUT /api/students/{id}
+ * Updates only the editable profile fields (full name, phone number).
+ * @param {number} id
+ * @param {{ fullName: string, phoneNumber: string }} payload
+ */
+export function updateStudentProfile(id, payload) {
+  return request(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
 /**
  * GET /api/students/{id}/orders
  * @param {number} id

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.skipq.backend.entity.College;
 import com.skipq.backend.repository.CollegeRepository;
+import com.skipq.backend.dto.student.ProfileResponse;
 
+import com.skipq.backend.dto.student.UpdateProfileRequest;
 @Service
 public class StudentService {
 
@@ -99,5 +101,45 @@ public class StudentService {
         }
 
         return LoginResponse.from(student);
+    }
+    /**
+     * Fetches a student's profile for display on the Profile page.
+     *
+     * @throws IllegalArgumentException if no student exists with the given id
+     */
+    @Transactional(readOnly = true)
+    public ProfileResponse getProfile(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found."));
+
+        return ProfileResponse.from(student);
+    }
+
+    /**
+     * Updates the editable profile fields (full name, phone number) for a
+     * student. Email, college, and password are intentionally untouched —
+     * this endpoint only ever writes the two fields the Profile page's
+     * "Save Changes" form exposes.
+     *
+     * @throws IllegalArgumentException if the student doesn't exist, or the
+     *         new phone number is already used by a different account
+     */
+    @Transactional
+    public ProfileResponse updateProfile(Long id, UpdateProfileRequest request) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found."));
+
+        String newPhoneNumber = request.getPhoneNumber().trim();
+
+        if (studentRepository.existsByPhoneNumberAndIdNot(newPhoneNumber, id)) {
+            throw new IllegalArgumentException(
+                    "An account with this phone number already exists.");
+        }
+
+        student.setFullName(request.getFullName().trim());
+        student.setPhoneNumber(newPhoneNumber);
+
+        Student saved = studentRepository.save(student);
+        return ProfileResponse.from(saved);
     }
 }

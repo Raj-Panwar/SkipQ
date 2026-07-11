@@ -51,6 +51,16 @@ async function init() {
 
   if (student) {
     initNotifications(student.id);
+
+    // If we got here via the bottom nav's Notifications tab (from a page
+    // other than Menu), open the bell panel automatically once it's wired up.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openNotifications") === "1") {
+      document.getElementById("notificationBell")?.click();
+      params.delete("openNotifications");
+      const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : "");
+      window.history.replaceState({}, "", cleanUrl);
+    }
   }
 
 

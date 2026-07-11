@@ -13,7 +13,6 @@ public class FileCleanupService {
 
     private final OrderItemRepository orderItemRepository;
     private final FileStorageService fileStorageService;
-    
 
     public FileCleanupService(
             OrderItemRepository orderItemRepository,
@@ -22,44 +21,39 @@ public class FileCleanupService {
         this.orderItemRepository = orderItemRepository;
         this.fileStorageService = fileStorageService;
     }
-    
 
-    @Scheduled(cron = "0 0 2 * * *")
-public void deleteOldFiles() {
+    @Scheduled(cron = "0 */30 * * * *")
+    public void deleteOldFiles() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
 
-    System.out.println("===== Running file cleanup =====");
+        System.out.println("Cutoff: " + cutoff);
 
-    LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
+        List<OrderItem> oldItems = orderItemRepository.findByUploadedAtBefore(cutoff);
 
-    System.out.println("Cutoff: " + cutoff);
+        System.out.println("Found items: " + oldItems.size());
 
-    List<OrderItem> oldItems =
-            orderItemRepository.findByUploadedAtBefore(cutoff);
+        for (OrderItem item : oldItems) {
 
-    System.out.println("Found items: " + oldItems.size());
+            System.out.println("Processing: " + item.getFileName());
 
-    for (OrderItem item : oldItems) {
+            if (item.getFileName() == null) {
+                continue;
+            }
 
-        System.out.println("Processing: " + item.getFileName());
+            try {
 
-        if (item.getFileName() == null) {
-            continue;
-        }
+                fileStorageService.deleteFile(item.getFileName());
 
-        try {
+                System.out.println("Deleted!");
 
-            fileStorageService.deleteFile(item.getFileName());
+                item.setFileName(null);
+                orderItemRepository.save(item);
 
-            System.out.println("Deleted!");
+            } catch (Exception e) {
 
-            item.setFileName(null);
-            orderItemRepository.save(item);
+                e.printStackTrace();
 
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
+            }
         }
     }
-}
 }

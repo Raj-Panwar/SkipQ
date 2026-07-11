@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile • SkipQ</title>
+
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/student.css">
+</head>
+
+<body class="app-body">
+
+<header class="app-header app-header-simple">
+    <div class="app-header-row">
+        <div class="brand-mini">
+            <span class="brand-name-light">SkipQ</span>
+        </div>
+
+        <h1 class="page-title">Profile</h1>
+
+        <div class="header-spacer"></div>
+    </div>
+</header>
+
+<main class="app-main">
+
+    <!-- ================= Profile Header ================= -->
+
+    <section class="card profile-header-card">
+
+        <div class="profile-avatar">
+
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4 20c1.8-3.5 5-5 8-5s6.2 1.5 8 5"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"/>
+            </svg>
+
+        </div>
+
+        <h2
+            id="profileFullName"
+            class="profile-name">
+            Loading...
+        </h2>
+
+        <p
+            id="profileCollegeLine"
+            class="profile-college">
+            &nbsp;
+        </p>
+
+    </section>
+
+    <!-- ================= Personal Information ================= -->
+
+    <section class="card profile-section-card">
+
+        <h2 class="profile-section-title">
+            Personal Information
+        </h2>
+
+        <form id="profileForm" novalidate>
+
+            <div class="form-group">
+                <label for="profileName">Full Name</label>
+
+                <input
+                    id="profileName"
+                    class="input"
+                    type="text">
+
+                <small
+                    id="profileNameError"
+                    class="field-error"
+                    hidden></small>
+            </div>
+
+            <div class="form-group">
+                <label for="profileEmail">Email</label>
+
+                <input
+                    id="profileEmail"
+                    class="input"
+                    type="email"
+                    disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="profilePhone">Phone Number</label>
+
+                <input
+                    id="profilePhone"
+                    class="input"
+                    type="tel"
+                    maxlength="10">
+
+                <small
+                    id="profilePhoneError"
+                    class="field-error"
+                    hidden></small>
+            </div>
+
+            <div class="form-row-2">
+
+                <div class="form-group">
+                    <label for="profileCollegeName">College</label>
+
+                    <input
+                        id="profileCollegeName"
+                        class="input"
+                        disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="profileCollegeCode">College Code</label>
+
+                    <input
+                        id="profileCollegeCode"
+                        class="input"
+                        disabled>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+                <label for="profileMemberSince">
+                    Member Since
+                </label>
+
+                <input
+                    id="profileMemberSince"
+                    class="input"
+                    disabled>
+            </div>
+
+            <div
+                id="profileFormAlert"
+                class="alert alert-error"
+                hidden>
+            </div>
+
+            <button
+                id="profileSaveBtn"
+                class="btn btn-primary"
+                type="submit">
+                Save Changes
+            </button>
+
+        </form>
+
+    </section>
+
+    <!-- ================= Order History ================= -->
+
+    <section class="card profile-section-card">
+
+        <h2 class="profile-section-title">
+            My Orders
+        </h2>
+
+        <div id="historyList" class="history-list"></div>
+
+        <div
+            id="emptyHistoryState"
+            class="empty-state-block empty-state-block-compact"
+            hidden>
+
+            <p class="empty-state-icon">📦</p>
+
+            <h3>No Orders Yet</h3>
+
+            <p>
+                Your completed orders will appear here.
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- ================= Logout ================= -->
+
+    <section class="profile-section-card">
+
+        <button
+            id="profileLogoutBtn"
+            class="btn btn-danger btn-logout"
+            type="button">
+
+            Logout
+
+        </button>
+
+    </section>
+
+</main>
+
+<!-- ================= Logout Modal ================= -->
+
+<div
+    id="logoutModalOverlay"
+    class="modal-overlay"
+    hidden>
+
+    <div class="modal modal-sm">
+
+        <h3>Logout?</h3>
+
+        <p class="modal-body-text">
+            Are you sure you want to logout?
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                id="cancelLogoutBtn"
+                class="btn btn-secondary"
+                type="button">
+                Cancel
+            </button>
+
+            <button
+                id="confirmLogoutBtn"
+                class="btn btn-danger"
+                type="button">
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module" src="../js/student/profilePage.js"></script>
+
+</body>
+</html>
