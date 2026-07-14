@@ -5,7 +5,12 @@ import com.skipq.backend.dto.LoginResponse;
 import com.skipq.backend.dto.student.RegisterRequest;
 import com.skipq.backend.entity.Student;
 import com.skipq.backend.repository.StudentRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import com.skipq.backend.security.AppUserPrincipal;
+import com.skipq.backend.security.JwtUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +29,21 @@ public class StudentService {
     // instance for the lifetime of this bean — no need to expose it as
     // a Spring @Bean since only this service uses it.
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     public StudentService(
             StudentRepository studentRepository,
             CollegeRepository collegeRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil) {
 
         this.studentRepository = studentRepository;
         this.collegeRepository = collegeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -85,22 +96,29 @@ public class StudentService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
 
-        College college = collegeRepository
-                .findByCodeIgnoreCase(request.getCollegeCode().trim().toLowerCase())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid college code."));
+        String username = AppUserPrincipal.composeUsername(
+                request.getEmail(), request.getCollegeCode());
 
-        Student student = studentRepository
-                .findByEmailAndCollege(
-                        request.getEmail().trim().toLowerCase(),
-                        college)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Invalid email or password."));
-
-        if (!passwordEncoder.matches(request.getPassword(), student.getPassword())) {
+        AppUserPrincipal principal;
+        try {
+            principal = (AppUserPrincipal) authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(
+                            username, request.getPassword()))
+                    .getPrincipal();
+        } catch (UsernameNotFoundException ex) {
+            // StudentUserDetailsService distinguishes "no such college" from
+            // "no such student in that college" via the exception message —
+            // preserve that distinction for the caller.
+            throw new IllegalArgumentException(ex.getMessage());
+        } catch (AuthenticationException ex) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
-        return LoginResponse.from(student);
+        Student student = studentRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+
+        String token = jwtUtil.generateToken(principal);
+        return LoginResponse.from(student, token);
     }
     /**
      * Fetches a student's profile for display on the Profile page.

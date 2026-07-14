@@ -5,10 +5,13 @@ import com.skipq.backend.dto.LoginResponse;
 import com.skipq.backend.dto.student.ProfileResponse;
 import com.skipq.backend.dto.student.RegisterRequest;
 import com.skipq.backend.dto.student.UpdateProfileRequest;
+import com.skipq.backend.security.AppUserPrincipal;
 import com.skipq.backend.service.StudentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -58,19 +61,20 @@ public class StudentController {
     /**
      * POST /api/students/login
      *
-     * Authenticates a student. No JWT is issued — the frontend stores
-     * the returned student object in sessionStorage and uses the id for
+     * Authenticates a student and returns a JWT access token, valid for
+     * 2 hours, to be sent as "Authorization: Bearer <token>" on
      * subsequent requests.
      *
      * Request body:
      * {
+     * "collegeCode": "ABC",
      * "email": "raj@college.edu",
      * "password": "secret123"
      * }
      *
      * Responses:
-     * 200 OK — { id, fullName, email, phoneNumber }
-     * 401 Unauthorized — wrong email or password
+     * 200 OK — { id, fullName, email, phoneNumber, collegeCode, token }
+     * 401 Unauthorized — wrong college/email/password
      * 400 Bad Request — validation error
      */
     @PostMapping("/login")
@@ -88,19 +92,19 @@ public class StudentController {
     }
 
     /**
-     * GET /api/students/{id}
+     * GET /api/students/me
      *
-     * Fetches a student's profile for the Profile page.
+     * Fetches the authenticated student's own profile.
      *
      * Responses:
      * 200 OK — { id, fullName, email, phoneNumber, collegeName, collegeCode,
      * memberSince }
-     * 404 Not Found — no student with this id
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getProfile(@PathVariable Long id) {
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/me")
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal AppUserPrincipal student) {
         try {
-            ProfileResponse response = studentService.getProfile(id);
+            ProfileResponse response = studentService.getProfile(student.getId());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity
@@ -110,10 +114,11 @@ public class StudentController {
     }
 
     /**
-     * PUT /api/students/{id}
+     * PUT /api/students/me
      *
-     * Updates the editable profile fields (full name, phone number).
-     * Email, college, and password cannot be changed through this endpoint.
+     * Updates the editable profile fields (full name, phone number) for
+     * the authenticated student. Email, college, and password cannot be
+     * changed through this endpoint.
      *
      * Request body:
      * {
@@ -124,15 +129,15 @@ public class StudentController {
      * Responses:
      * 200 OK — updated profile
      * 400 Bad Request — validation error or phone number already taken
-     * 404 Not Found — no student with this id
      */
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/me")
     public ResponseEntity<?> updateProfile(
-            @PathVariable Long id,
+            @AuthenticationPrincipal AppUserPrincipal student,
             @Valid @RequestBody UpdateProfileRequest request) {
 
         try {
-            ProfileResponse response = studentService.updateProfile(id, request);
+            ProfileResponse response = studentService.updateProfile(student.getId(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("not found")

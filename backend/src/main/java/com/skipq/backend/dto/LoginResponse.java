@@ -13,10 +13,11 @@ public class LoginResponse {
     private String email;
     private String collegeCode;
     private String phoneNumber;
+    private String token;
 
     public LoginResponse() {}
 
-    /** Convenience factory — builds from a Student entity. */
+    /** Convenience factory — builds from a Student entity (no token, e.g. register response). */
     public static LoginResponse from(Student student) {
         LoginResponse res = new LoginResponse();
         res.id          = student.getId();
@@ -27,6 +28,13 @@ public class LoginResponse {
         return res;
     }
 
+    /** Convenience factory — builds from a Student entity plus a freshly issued JWT. */
+    public static LoginResponse from(Student student, String token) {
+        LoginResponse res = from(student);
+        res.token = token;
+        return res;
+    }
+
     public Long getId() { return id; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
@@ -34,4 +42,5 @@ public class LoginResponse {
     return collegeCode;
 }
     public String getPhoneNumber() { return phoneNumber; }
+    public String getToken() { return token; }
 }

@@ -4,6 +4,7 @@ import com.skipq.backend.entity.Student;
 import com.skipq.backend.exception.NoActiveOrderException;
 import com.skipq.backend.exception.OrderCancellationException;
 import com.skipq.backend.repository.StudentRepository;
+import com.skipq.backend.security.AppUserPrincipal;
 import com.skipq.backend.constants.InventoryConstants;
 import com.skipq.backend.dto.CreateOrderItemRequest;
 import com.skipq.backend.dto.college.CollegeResponse;
@@ -276,7 +277,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long id) {
+    public OrderResponse getOrderById(Long id, AppUserPrincipal principal) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(
                         "Order not found with id: " + id));
@@ -285,7 +286,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public QueueInfoDTO getQueueInfo(Long orderId) {
+    public QueueInfoDTO getQueueInfo(Long orderId, AppUserPrincipal principal) {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));

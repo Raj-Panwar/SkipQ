@@ -1,7 +1,10 @@
 package com.skipq.backend.controller;
 
 import com.skipq.backend.dto.NotificationResponse;
+import com.skipq.backend.security.AppUserPrincipal;
 import com.skipq.backend.service.NotificationService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,53 +21,69 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
-    @GetMapping("/student/{studentId}")
-    public List<NotificationResponse> getNotifications(@PathVariable Long studentId) {
-        return notificationService.getNotificationsForStudent(studentId);
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/student/me")
+    public List<NotificationResponse> getNotifications(@AuthenticationPrincipal AppUserPrincipal student) {
+        return notificationService.getNotificationsForStudent(student.getId());
     }
 
-    @GetMapping("/student/{studentId}/unread-count")
-    public Map<String, Long> getUnreadCount(@PathVariable Long studentId) {
-        return Map.of("unreadCount", notificationService.getUnreadCount(studentId));
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/student/me/unread-count")
+    public Map<String, Long> getUnreadCount(@AuthenticationPrincipal AppUserPrincipal student) {
+        return Map.of("unreadCount", notificationService.getUnreadCount(student.getId()));
     }
 
+    // Shared by both the student and admin notification panels (no
+    // separate admin markAsRead endpoint exists), so both roles are
+    // allowed here — matching the pre-JWT behavior where this endpoint
+    // had no role distinction at all.
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     @PutMapping("/{id}/read")
-    public Map<String, String> markAsRead(@PathVariable Long id) {
-        notificationService.markAsRead(id);
-        return Map.of("message", "Marked as read");
-    }
+public Map<String, String> markAsRead(
+        @AuthenticationPrincipal AppUserPrincipal principal,
+        @PathVariable Long id) {
 
-    @PutMapping("/student/{studentId}/read-all")
-    public Map<String, String> markAllAsRead(@PathVariable Long studentId) {
-        notificationService.markAllAsRead(studentId);
+    notificationService.markAsRead(id, principal);
+
+    return Map.of("message", "Marked as read");
+}
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/student/me/read-all")
+    public Map<String, String> markAllAsRead(@AuthenticationPrincipal AppUserPrincipal student) {
+        notificationService.markAllAsRead(student.getId());
         return Map.of("message", "All notifications marked as read");
     }
 
-  @GetMapping("/admin")
-public List<NotificationResponse> getAdminNotifications(
-        @RequestHeader("X-Admin-Id") Long adminId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public List<NotificationResponse> getAdminNotifications(
+            @AuthenticationPrincipal AppUserPrincipal admin) {
 
-    return notificationService.getNotificationsForAdmin(adminId);
-}
+        return notificationService.getNotificationsForAdmin(admin.getId());
+    }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/unread-count")
-public Map<String, Long> getAdminUnreadCount(
-        @RequestHeader("X-Admin-Id") Long adminId) {
+    public Map<String, Long> getAdminUnreadCount(
+            @AuthenticationPrincipal AppUserPrincipal admin) {
 
-    return Map.of(
-            "unreadCount",
-            notificationService.getUnreadCountForAdmin(adminId)
-    );
-}
+        return Map.of(
+                "unreadCount",
+                notificationService.getUnreadCountForAdmin(admin.getId())
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/read-all")
-public Map<String, String> markAllAdminNotificationsAsRead(
-        @RequestHeader("X-Admin-Id") Long adminId) {
+    public Map<String, String> markAllAdminNotificationsAsRead(
+            @AuthenticationPrincipal AppUserPrincipal admin) {
 
-    notificationService.markAllAsReadForAdmin(adminId);
+        notificationService.markAllAsReadForAdmin(admin.getId());
 
-    return Map.of(
-            "message",
-            "All notifications marked as read"
-    );
-}
+        return Map.of(
+                "message",
+                "All notifications marked as read"
+        );
+    }
 }

@@ -1,10 +1,9 @@
 package com.skipq.backend.controller;
 
-import com.skipq.backend.service.AdminService;
 import com.skipq.backend.dto.CreateOrderRequest;
 import com.skipq.backend.dto.PreLoginQueueDTO;
 import com.skipq.backend.dto.QueueInfoDTO;
-import com.skipq.backend.entity.Order;
+import com.skipq.backend.security.AppUserPrincipal;
 import com.skipq.backend.service.OrderService;
 import com.skipq.backend.exception.OrderNotFoundException;
 import com.skipq.backend.dto.WaitEstimateDTO;
@@ -15,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.skipq.backend.exception.NoActiveOrderException;
@@ -27,43 +28,36 @@ import java.util.List;
 @RequestMapping("/api/orders")
 @CrossOrigin("*")
 public class OrderController {
-    private final AdminService adminService;
 
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService,
-            AdminService adminService) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
-        this.adminService = adminService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<OrderResponse> updateStatus(
-
-            @RequestHeader("X-Admin-Id") Long adminId,
+            @AuthenticationPrincipal AppUserPrincipal admin,
 
             @PathVariable Long id,
 
             @RequestParam String status) {
 
-        Long collegeId = adminService
-                .getById(adminId)
-                .getCollege()
-                .getId();
-
-        OrderResponse updatedOrder = orderService.updateStatus(id, collegeId, status);
+        OrderResponse updatedOrder = orderService.updateStatus(id, admin.getCollegeId(), status);
 
         return ResponseEntity.ok(updatedOrder);
     }
 
+    @PreAuthorize("hasRole('STUDENT')")
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(
-            @PathVariable Long id,
-            @RequestParam Long studentId) {
+            @AuthenticationPrincipal AppUserPrincipal student,
+            @PathVariable Long id) {
 
         try {
 
-            OrderResponse cancelledOrder = orderService.cancelOrder(id, studentId);
+            OrderResponse cancelledOrder = orderService.cancelOrder(id, student.getId());
 
             return ResponseEntity.ok(cancelledOrder);
 
@@ -81,60 +75,75 @@ public class OrderController {
         }
     }
 
+    @PreAuthorize("hasRole('STUDENT')")
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
+            @AuthenticationPrincipal AppUserPrincipal student,
             @Valid @RequestBody CreateOrderRequest request) {
+
+        // The authenticated student's id always wins, regardless of what
+        // (if anything) the client put in the request body.
+        request.setStudentId(student.getId());
 
         OrderResponse order = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
-   @GetMapping
-public List<OrderResponse> getAllOrders(
-        @RequestHeader("X-Admin-Id") Long adminId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public List<OrderResponse> getAllOrders(
+            @AuthenticationPrincipal AppUserPrincipal admin) {
 
-    Long collegeId = adminService
-            .getById(adminId)
-            .getCollege()
-            .getId();
+        return orderService.getAllOrders(admin.getCollegeId());
+    }
 
-    return orderService.getAllOrders(collegeId);
-}
-
+    @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/wait-estimate")
     public WaitEstimateDTO getCurrentWaitEstimate(
-            @RequestParam Long studentId) {
+            @AuthenticationPrincipal AppUserPrincipal student) {
 
-        return orderService.getCurrentWaitEstimate(studentId);
+        return orderService.getCurrentWaitEstimate(student.getId());
     }
 
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     @GetMapping("/{id:\\d+}")
-    public OrderResponse getOrderById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
-    }
+    public OrderResponse getOrderById(
+        @AuthenticationPrincipal AppUserPrincipal principal,
+        @PathVariable Long id) {
 
-    @GetMapping("/{id:\\d+}/queue")
-    public QueueInfoDTO getQueueInfo(@PathVariable Long id) {
-        return orderService.getQueueInfo(id);
-    }
-
-    @GetMapping("/student/{studentId}")
-    public List<OrderResponse> getStudentOrders(@PathVariable Long studentId) {
-        return orderService.getOrdersByStudent(studentId);
-    }
-
-   @GetMapping("/student/{studentId}/active")
-public OrderResponse getActiveOrder(
-        @PathVariable Long studentId) {
-
-    return orderService.getActiveOrder(studentId);
+    return orderService.getOrderById(id, principal);
 }
 
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
+    @GetMapping("/{id:\\d+}/queue")
+    public QueueInfoDTO getQueueInfo(
+        @AuthenticationPrincipal AppUserPrincipal principal,
+        @PathVariable Long id) {
+
+    return orderService.getQueueInfo(id, principal);
+}
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/student/me")
+    public List<OrderResponse> getStudentOrders(
+            @AuthenticationPrincipal AppUserPrincipal student) {
+        return orderService.getOrdersByStudent(student.getId());
+    }
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/student/me/active")
+    public OrderResponse getActiveOrder(
+            @AuthenticationPrincipal AppUserPrincipal student) {
+
+        return orderService.getActiveOrder(student.getId());
+    }
+
+    @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/queue/current-serving")
     public Integer getCurrentServingToken(
-            @RequestParam Long studentId) {
+            @AuthenticationPrincipal AppUserPrincipal student) {
 
-        return orderService.getCurrentServingToken(studentId);
+        return orderService.getCurrentServingToken(student.getId());
     }
 
     @GetMapping("/queue/college/{collegeCode}")
@@ -144,10 +153,11 @@ public OrderResponse getActiveOrder(
         return orderService.getPreLoginQueueByCollegeCode(collegeCode);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/search")
     public Page<OrderResponse> searchOrders(
 
-            @RequestHeader("X-Admin-Id") Long adminId,
+            @AuthenticationPrincipal AppUserPrincipal admin,
 
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String status,
@@ -157,13 +167,8 @@ public OrderResponse getActiveOrder(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Long collegeId = adminService
-                .getById(adminId)
-                .getCollege()
-                .getId();
-
         return orderService.searchOrders(
-                collegeId,
+                admin.getCollegeId(),
                 query,
                 status,
                 date,

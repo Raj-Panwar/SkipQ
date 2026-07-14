@@ -6,6 +6,7 @@ import com.skipq.backend.dto.admin.AdminRegisterRequest;
 import com.skipq.backend.service.AdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -19,6 +20,14 @@ public class AdminController {
         this.adminService = adminService;
     }
 
+    /**
+     * Creating a new admin account is itself an admin-management action,
+     * so it requires an existing admin's token — there's no public
+     * self-service admin signup. (SecurityConfig also enforces this at
+     * the URL level for /api/admins/**, this annotation makes the
+     * requirement explicit at the endpoint too.)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/register")
     public ResponseEntity<AdminLoginResponse> register(
             @Valid @RequestBody AdminRegisterRequest request) {

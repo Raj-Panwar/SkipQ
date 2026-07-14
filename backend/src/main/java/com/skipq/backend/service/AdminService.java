@@ -8,6 +8,11 @@ import com.skipq.backend.entity.College;
 import com.skipq.backend.exception.InvalidCredentialsException;
 import com.skipq.backend.repository.AdminRepository;
 import com.skipq.backend.repository.CollegeRepository;
+import com.skipq.backend.security.AppUserPrincipal;
+import com.skipq.backend.security.JwtUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +26,19 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final CollegeRepository collegeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     public AdminService(AdminRepository adminRepository,
                         CollegeRepository collegeRepository,
-                        PasswordEncoder passwordEncoder) {
+                        PasswordEncoder passwordEncoder,
+                        AuthenticationManager authenticationManager,
+                        JwtUtil jwtUtil) {
         this.adminRepository = adminRepository;
         this.collegeRepository = collegeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     public AdminLoginResponse register(AdminRegisterRequest request) {
@@ -59,20 +70,24 @@ public class AdminService {
     @Transactional(readOnly = true)
     public AdminLoginResponse login(AdminLoginRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase();
-        String collegeCode = request.getCollegeCode().trim().toUpperCase();
+        String username = AppUserPrincipal.composeUsername(
+                request.getEmail(), request.getCollegeCode());
 
-        College college = collegeRepository.findByCodeIgnoreCase(collegeCode)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
-
-        Admin admin = adminRepository.findByEmailAndCollege(email, college)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
-
-        if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
+        AppUserPrincipal principal;
+        try {
+            principal = (AppUserPrincipal) authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(
+                            username, request.getPassword()))
+                    .getPrincipal();
+        } catch (AuthenticationException ex) {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        return toLoginResponse(admin, college.getCode());
+        Admin admin = adminRepository.findById(principal.getId())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
+
+        String token = jwtUtil.generateToken(principal);
+        return toLoginResponse(admin, principal.getCollegeCode(), token);
     }
 
     @Transactional(readOnly = true)
@@ -86,11 +101,16 @@ public class AdminService {
     }
 
     private AdminLoginResponse toLoginResponse(Admin admin, String collegeCode) {
+        return toLoginResponse(admin, collegeCode, null);
+    }
+
+    private AdminLoginResponse toLoginResponse(Admin admin, String collegeCode, String token) {
         return new AdminLoginResponse(
                 admin.getId(),
                 admin.getFullName(),
                 admin.getEmail(),
-                collegeCode
+                collegeCode,
+                token
         );
     }
     public Admin getById(Long id) {

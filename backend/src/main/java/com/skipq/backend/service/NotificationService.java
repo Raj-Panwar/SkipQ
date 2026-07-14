@@ -4,6 +4,8 @@ import com.skipq.backend.entity.Notification;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.entity.Product;
 import com.skipq.backend.repository.NotificationRepository;
+import com.skipq.backend.security.AppUserPrincipal;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.skipq.backend.dto.NotificationResponse;
@@ -118,7 +120,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAsRead(Long notificationId) {
+    public void markAsRead(Long notificationId,
+                       AppUserPrincipal principal) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
         notification.setRead(true);
