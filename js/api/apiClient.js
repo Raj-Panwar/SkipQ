@@ -2,7 +2,7 @@
 // Thin fetch wrapper: prefixes the API base URL, injects the JWT
 // Authorization header when present, and normalizes error handling.
 
-import { getToken } from "../auth/tokenStorage.js";
+import { getToken } from "../shared/auth.js";
 
 const API_BASE_URL = "http://localhost:8080/api/v1";
 

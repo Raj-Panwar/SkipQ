@@ -17,7 +17,7 @@ import {
   getCurrentWaitEstimate
 } from "./orderApi.js";
 import { addToCart, addPrintJob, getCartCount, getCartTotal, getCart } from "./cartStore.js";
-import { getSession, requireAuth } from "../shared/auth.js";
+import { getSession, getToken, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
@@ -68,7 +68,7 @@ async function init() {
     welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
 
   }
-  
+
 
   async function loadCurrentServing() {
 
@@ -89,30 +89,30 @@ async function init() {
   }
   async function loadEstimatedWait() {
 
-  try {
+    try {
 
-    const data = await getCurrentWaitEstimate();
+      const data = await getCurrentWaitEstimate();
 
-    if (data.estimatedWaitMinutes == null) {
-      estimatedWaitText.textContent = "Calculating...";
-      return;
+      if (data.estimatedWaitMinutes == null) {
+        estimatedWaitText.textContent = "Calculating...";
+        return;
+      }
+
+      if (data.ordersAhead === 0) {
+        estimatedWaitText.textContent = "No waiting";
+        return;
+      }
+
+      estimatedWaitText.textContent =
+        `≈ ${data.estimatedWaitMinutes} min wait`;
+
+    } catch (e) {
+
+      estimatedWaitText.textContent = "--";
+
     }
-
-    if (data.ordersAhead === 0) {
-      estimatedWaitText.textContent = "No waiting";
-      return;
-    }
-
-    estimatedWaitText.textContent =
-      `≈ ${data.estimatedWaitMinutes} min wait`;
-
-  } catch (e) {
-
-    estimatedWaitText.textContent = "--";
 
   }
-
-}
   await loadCurrentServing();
   setInterval(loadCurrentServing, 1000);
 
@@ -139,7 +139,7 @@ async function init() {
   productGrid.addEventListener("click", handleGridClick);
 
   // window.addEventListener("focus", refreshProducts);
-  
+
 
 }
 
@@ -181,6 +181,9 @@ async function uploadPdf(file) {
 
   const response = await fetch(FILE_UPLOAD_API, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    },
     body: formData
   });
 
@@ -242,7 +245,7 @@ async function handleGridClick(event) {
       updateCartUI();
 
       showToast(
-        "Print job added successfully.",
+        `Print job added — ${copies} × ${file.name}`,
         "success"
       );
 
@@ -254,9 +257,10 @@ async function handleGridClick(event) {
         "error"
       );
 
+      return;
     }
-    updateCartUI();
-    showToast(`Print job added — ${copies} × ${file.name}`, "success");
+    //updateCartUI();
+    //showToast(`Print job added — ${copies} × ${file.name}`, "success");
   }
 }
 

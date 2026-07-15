@@ -33,9 +33,6 @@ public class FileCleanupService {
         System.out.println("Found items: " + oldItems.size());
 
         for (OrderItem item : oldItems) {
-
-            System.out.println("Processing: " + item.getFileName());
-
             if (item.getFileName() == null) {
                 continue;
             }

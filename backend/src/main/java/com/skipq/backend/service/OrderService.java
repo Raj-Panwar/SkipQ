@@ -148,7 +148,6 @@ public class OrderService {
                 "CANCELLED");
         notificationService.notifyOrderCancelled(cancelledOrder);
 
-
         return orderMapper.toResponse(cancelledOrder);
     }
 
@@ -240,12 +239,10 @@ public class OrderService {
                 productRepository.save(product);
 
                 if (product.getStock() == 0) {
-    
 
                     notificationService.notifyOutOfStock(product);
 
                 } else if (product.getStock() <= InventoryConstants.LOW_STOCK_THRESHOLD) {
-                    
 
                     notificationService.notifyLowStock(product);
 
@@ -278,18 +275,53 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long id, AppUserPrincipal principal) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Order not found with id: " + id));
+
+        Order order;
+
+        if (principal.isStudent()) {
+
+            order = orderRepository
+                    .findByIdAndStudentId(id, principal.getId())
+                    .orElseThrow(() -> new OrderNotFoundException(
+                            "Order not found or access denied."));
+
+        } else if (principal.isAdmin()) {
+
+            order = orderRepository
+                    .findByIdAndCollegeId(id, principal.getCollegeId())
+                    .orElseThrow(() -> new OrderNotFoundException(
+                            "Order not found or access denied."));
+
+        } else {
+            throw new RuntimeException("Unsupported user type.");
+        }
 
         return orderMapper.toResponse(order);
     }
 
     @Transactional(readOnly = true)
-    public QueueInfoDTO getQueueInfo(Long orderId, AppUserPrincipal principal) {
+    public QueueInfoDTO getQueueInfo(Long orderId,
+            AppUserPrincipal principal) {
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order;
+
+        if (principal.isStudent()) {
+
+            order = orderRepository
+                    .findByIdAndStudentId(orderId, principal.getId())
+                    .orElseThrow(() -> new OrderNotFoundException(
+                            "Order not found or access denied."));
+
+        } else if (principal.isAdmin()) {
+
+            order = orderRepository
+                    .findByIdAndCollegeId(orderId, principal.getCollegeId())
+                    .orElseThrow(() -> new OrderNotFoundException(
+                            "Order not found or access denied."));
+
+        } else {
+            throw new RuntimeException("Unsupported user type.");
+        }
 
         Long collegeId = order.getCollege().getId();
 

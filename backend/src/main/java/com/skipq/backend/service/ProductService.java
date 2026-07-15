@@ -45,7 +45,7 @@ public class ProductService {
         Product product = repository.findById(id).orElse(null);
 
         if (product == null || !product.getCollege().getId().equals(collegeId)) {
-            return null;
+             throw new RuntimeException("Product not found");
         }
 
         return product;
@@ -55,9 +55,6 @@ public class ProductService {
 
         Product product = getProductById(id, collegeId);
 
-        if (product == null) {
-            return null;
-        }
 
         product.setName(updated.getName());
         product.setCategory(updated.getCategory());
@@ -72,9 +69,7 @@ public class ProductService {
     public void deleteProduct(Long id, Long collegeId) {
         Product product = getProductById(id, collegeId);
 
-        if (product == null) {
-            throw new RuntimeException("Product not found");
-        }
+        
 
         repository.delete(product);
     }

@@ -56,7 +56,7 @@ async function init() {
 
 async function loadProfile() {
   try {
-    const profile = await getStudentProfile(student.id);
+    const profile = await getStudentProfile();
     setCachedProfile(profile);
     renderProfile(profile);
   } catch (error) {
@@ -81,7 +81,7 @@ function renderProfile(profile) {
 
 async function loadHistory() {
   try {
-    const orders = await getStudentOrders(student.id);
+    const orders = await getStudentOrders();
 
     if (!orders || orders.length === 0) {
       historyList.replaceChildren();
@@ -153,7 +153,7 @@ form.addEventListener("submit", async (e) => {
   setLoading(true);
 
   try {
-    const updated = await updateStudentProfile(student.id, { fullName, phoneNumber });
+    const updated = await updateStudentProfile({ fullName, phoneNumber });
 
     setCachedProfile(updated);
     renderProfile(updated);

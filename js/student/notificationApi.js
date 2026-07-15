@@ -2,21 +2,24 @@ import { request } from "../api/apiClient.js";
 
 const BASE_URL = "/notifications";
 
-export function getNotifications(studentId) {
-  return request(`${BASE_URL}/student/${studentId}`);
+export function getNotifications() {
+  return request(`${BASE_URL}/student/me`, { auth: true });
 }
-export function getUnreadCount(studentId) {
-  return request(`${BASE_URL}/student/${studentId}/unread-count`);
+
+export function getUnreadCount() {
+  return request(`${BASE_URL}/student/me/unread-count`, { auth: true });
 }
 
 export function markNotificationRead(id) {
   return request(`${BASE_URL}/${id}/read`, {
     method: "PUT",
+    auth: true,
   });
 }
 
-export function markAllNotificationsRead(studentId) {
-  return request(`${BASE_URL}/student/${studentId}/read-all`, {
+export function markAllNotificationsRead() {
+  return request(`${BASE_URL}/student/me/read-all`, {
     method: "PUT",
+    auth: true,
   });
 }

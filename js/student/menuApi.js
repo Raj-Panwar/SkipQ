@@ -1,6 +1,6 @@
 // js/student/menuApi.js
 
-import { getSession } from "../shared/auth.js";
+import { getSession, getToken } from "../shared/auth.js";
 
 const BASE_URL = "http://localhost:8080/api/products";
 
@@ -16,7 +16,8 @@ export async function getMenuProducts() {
     `${BASE_URL}/college/${student.collegeCode}`,
     {
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`
       }
     }
   );
@@ -39,7 +40,12 @@ export async function getProductById(id) {
   const student = getSession();
 
   const response = await fetch(
-    `${BASE_URL}/student/${id}?collegeCode=${student.collegeCode}`
+    `${BASE_URL}/student/${id}?collegeCode=${student.collegeCode}`,
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    }
   );
 
   if (!response.ok) {
@@ -48,4 +54,3 @@ export async function getProductById(id) {
 
   return response.json();
 }
-

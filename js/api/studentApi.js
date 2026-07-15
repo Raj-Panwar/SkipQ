@@ -1,15 +1,22 @@
 // js/api/studentApi.js
-// NEW FILE — fetch client for Student auth and profile endpoints.
+// fetch client for Student auth and profile endpoints.
 // Follows the same pattern as productApi.js and orderApi.js so the
 // codebase stays consistent.
+
+import { getToken } from "../shared/auth.js";
 
 const BASE_URL = "http://localhost:8080/api/students";
 
 async function request(url, options = {}) {
+  const token = getToken();
+
   let response;
   try {
     response = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       ...options,
     });
   } catch (_networkError) {
@@ -29,7 +36,7 @@ async function request(url, options = {}) {
 
 /**
  * POST /api/students/register
- * @param {{ fullName, email, phoneNumber, password }} payload
+ * @param {{ fullName, email, phoneNumber, password, collegeCode }} payload
  * @returns {{ id, fullName, email, phoneNumber }}
  */
 export function registerStudent(payload) {
@@ -41,8 +48,8 @@ export function registerStudent(payload) {
 
 /**
  * POST /api/students/login
- * @param {{ email, password }} payload
- * @returns {{ id, fullName, email, phoneNumber }}
+ * @param {{ collegeCode, email, password }} payload
+ * @returns {{ id, fullName, email, phoneNumber, collegeCode, token }}
  */
 export function loginStudent(payload) {
   return request(`${BASE_URL}/login`, {
@@ -52,28 +59,21 @@ export function loginStudent(payload) {
 }
 
 /**
- * GET /api/students/{id}
- * @param {number} id
+ * GET /api/students/me
+ * Identity comes from the JWT — no id needed.
  */
-export function getStudentProfile(id) {
-  return request(`${BASE_URL}/${id}`);
+export function getStudentProfile() {
+  return request(`${BASE_URL}/me`);
 }
+
 /**
- * PUT /api/students/{id}
+ * PUT /api/students/me
  * Updates only the editable profile fields (full name, phone number).
- * @param {number} id
  * @param {{ fullName: string, phoneNumber: string }} payload
  */
-export function updateStudentProfile(id, payload) {
-  return request(`${BASE_URL}/${id}`, {
+export function updateStudentProfile(payload) {
+  return request(`${BASE_URL}/me`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
-}
-/**
- * GET /api/students/{id}/orders
- * @param {number} id
- */
-export function getStudentOrders(id) {
-  return request(`${BASE_URL}/${id}/orders`);
 }

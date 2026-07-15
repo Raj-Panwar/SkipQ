@@ -22,6 +22,11 @@ export function isLoggedIn() {
     return getSession() !== null;
 }
 
+/** The JWT issued at login, stored alongside the rest of the session. */
+export function getToken() {
+    return getSession()?.token ?? null;
+}
+
 export function requireAuth() {
     if (!isLoggedIn()) {
         window.location.href = "./login.html";

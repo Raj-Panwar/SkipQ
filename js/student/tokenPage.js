@@ -1,8 +1,7 @@
 // js/student/tokenPage.js
-import { isAuthenticated } from "../auth/tokenStorage.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
-import { getSession } from "../shared/auth.js";
+import { requireAuth } from "../shared/auth.js";
 import {
   getActiveOrder,
   getQueueInfo,
@@ -23,10 +22,7 @@ const cancelledMessage = document.getElementById("cancelledMessage");
 const progressSection = document.getElementById("progressSection");
 const waitEstimateRow = document.getElementById("waitEstimateRow");
 const queueTimelineSection = document.getElementById("queueTimelineSection");
-const DEV_MODE = true;
-if (!DEV_MODE && !isAuthenticated()) {
-  window.location.href = "./login.html";
-}
+requireAuth();
 
 initStudentNav("token");
 let order;
@@ -48,9 +44,7 @@ async function initializeTokenPage() {
 
   try {
 
-    const student = getSession();
-
-    order = await getActiveOrder(student.id);
+    order = await getActiveOrder();
 
     myTokenValue = order.tokenNumber;
     nowServingValue = myTokenValue;
@@ -228,12 +222,7 @@ async function handleCancelOrder() {
     cancelOrderBtn.disabled = true;
     cancelOrderBtn.textContent = "Cancelling...";
 
-    const student = JSON.parse(
-      sessionStorage.getItem("skipq_student")
-    );
-
-    await cancelOrder(order.id, student.id);
-+
+    await cancelOrder(order.id);
 
     await loadQueue();
 

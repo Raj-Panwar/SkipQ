@@ -1,35 +1,21 @@
 // js/student/historyPage.js
 import { getStudentOrders } from "./orderApi.js";
-import { getSession } from "../shared/auth.js";
-import { isAuthenticated } from "../auth/tokenStorage.js";
+import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency, formatDate } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
 
 const historyList       = document.getElementById("historyList");
 const emptyHistoryState = document.getElementById("emptyHistoryState");
 
-const DEV_MODE = true;
-if (!DEV_MODE && !isAuthenticated()) {
-  window.location.href = "./login.html";
-}
+requireAuth();
 
 initStudentNav("history");
-
 
 loadHistory();
 
 async function loadHistory() {
 
     const student = getSession();
-    
-    console.log("Student:", student);
-
-    const orders = await getStudentOrders(student.id);
-
-    console.log("Orders:", orders);
-
-    
-
 
     if (!student) {
         window.location.href = "./login.html";
@@ -38,7 +24,7 @@ async function loadHistory() {
 
     try {
 
-        const orders = await getStudentOrders(student.id);
+        const orders = await getStudentOrders();
 
         if (orders.length === 0) {
             historyList.replaceChildren();
@@ -53,8 +39,6 @@ async function loadHistory() {
         console.error(e);
     }
 }
-
-
 
 function buildCard(order) {
   const card = document.createElement("article");

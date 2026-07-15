@@ -11,7 +11,7 @@ async function request(url, options = {}) {
     response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        ...(admin ? { "X-Admin-Id": admin.id } : {}),
+        ...(admin?.token ? { Authorization: `Bearer ${admin.token}` } : {}),
       },
       ...options,
     });

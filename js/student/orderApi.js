@@ -1,15 +1,19 @@
-
 // js/student/orderApi.js
-import { getSession } from "../shared/auth.js";
+import { getToken } from "../shared/auth.js";
 
 const BASE_URL = "http://localhost:8080/api/orders";
 
 async function request(url, options = {}) {
   let response;
 
+  const token = getToken();
+
   try {
     response = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       ...options,
     });
   } catch (_networkError) {
@@ -36,10 +40,12 @@ export function createOrder(orderData) {
   });
 }
 
+// Admin-only (list all orders for the admin's college). Kept here for
+// backward compatibility since nothing currently imports it, but if you
+// need this from an admin page, prefer js/admin/adminApi.js instead.
 export function getOrders() {
   return request(BASE_URL);
 }
-
 
 export function getOrderById(id) {
   return request(`${BASE_URL}/${id}`);
@@ -47,16 +53,14 @@ export function getOrderById(id) {
 export function getQueueInfo(id) {
   return request(`${BASE_URL}/${id}/queue`);
 }
-export function getStudentOrders(studentId) {
-  return request(`${BASE_URL}/student/${studentId}`);
+
+/** The student's own order history. Identity comes from the JWT — no id needed. */
+export function getStudentOrders() {
+  return request(`${BASE_URL}/student/me`);
 }
+
 export function getCurrentServingToken() {
-
-    const student = getSession();
-
-    return request(
-        `${BASE_URL}/queue/current-serving?studentId=${student.id}`
-    );
+  return request(`${BASE_URL}/queue/current-serving`);
 }
 
 export function getPreLoginQueue(collegeCode) {
@@ -64,13 +68,10 @@ export function getPreLoginQueue(collegeCode) {
 }
 
 export function getCurrentWaitEstimate() {
-
-    const student = getSession();
-
-    return request(
-        `${BASE_URL}/wait-estimate?studentId=${student.id}`
-    );
+  return request(`${BASE_URL}/wait-estimate`);
 }
+
+// Admin-only search/filter across the college's orders.
 export function searchOrders({
   query = "",
   status = "",
@@ -91,15 +92,15 @@ export function searchOrders({
 
   return request(`${BASE_URL}/search?${params.toString()}`);
 }
-export function cancelOrder(orderId, studentId) {
-  return request(
-    `${BASE_URL}/${orderId}/cancel?studentId=${studentId}`,
-    {
-      method: "PUT",
-    }
-  );
+
+/** Cancels the caller's own order. Ownership is enforced server-side from the JWT. */
+export function cancelOrder(orderId) {
+  return request(`${BASE_URL}/${orderId}/cancel`, {
+    method: "PUT",
+  });
 }
 
-export function getActiveOrder(studentId) {
-  return request(`${BASE_URL}/student/${studentId}/active`);
+/** The student's own active order. Identity comes from the JWT — no id needed. */
+export function getActiveOrder() {
+  return request(`${BASE_URL}/student/me/active`);
 }

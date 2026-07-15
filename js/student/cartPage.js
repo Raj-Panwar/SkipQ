@@ -223,7 +223,8 @@ async function handleCheckout() {
     return;
 }
 const payload = {
-    studentId: student.id,
+    // studentId is intentionally omitted — the server derives it from the
+    // JWT and ignores any client-supplied value.
     studentName: student.fullName,
 
     items: items.map(item => {
