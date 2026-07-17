@@ -34,7 +34,7 @@
 
     <section class="token-hero-card" aria-label="Token status">
       <p class="token-hero-label">Your token</p>
-      <p class="token-hero-number" id="myTokenNumber">#052</p>
+      <p class="token-hero-number" id="myTokenNumber">---</p>
       <span class="badge badge-preparing" id="statusBadge">Preparing</span>
       <div class="cancelled-message card" id="cancelledMessage" hidden>
         <h3>✓ Order Cancelled</h3>
@@ -47,15 +47,15 @@
       <div class="serving-row" id="servingRow">
         <span>Now serving</span>
         <span id="liveRefreshDot" class="live-refresh-dot"></span>
-        <strong id="nowServingNumber">#046</strong>
+        <strong id="nowServingNumber" aria-live="polite">---</strong>
       </div>
 
       <div class="token-progress-track token-progress-track-large" id="progressSection">
         <div class="token-progress-fill" id="progressFill"></div>
       </div>
 
-      <p class="wait-estimate" id="waitEstimateRow">
-        Estimated wait: <strong id="waitEstimate">18 min</strong> · Position <strong id="queuePosition">6</strong> in
+      <p class="wait-estimate" id="waitEstimateRow" aria-live="polite">
+        Estimated wait: <strong id="waitEstimate">--</strong> · Position <strong id="queuePosition">-</strong> in
         line
       </p>
     </section>
@@ -63,6 +63,14 @@
       <button type="button" id="cancelOrderBtn" class="btn btn-danger" hidden>
         Cancel Order
       </button>
+    </div>
+
+    <div class="completed-message card" id="completedMessage" hidden>
+      <h3>✓ Order Collected</h3>
+      <p>
+        Enjoy! This order is complete — your token and order summary
+        stay here for reference.
+      </p>
     </div>
 
     <section class="queue-timeline-card card" id="queueTimelineSection">

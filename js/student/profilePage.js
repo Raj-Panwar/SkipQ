@@ -31,6 +31,46 @@ const saveBtn           = document.getElementById("profileSaveBtn");
 const historyList       = document.getElementById("historyList");
 const emptyHistoryState = document.getElementById("emptyHistoryState");
 
+const statTotalOrders   = document.getElementById("profileStatTotalOrders");
+const statTotalSpent    = document.getElementById("profileStatTotalSpent");
+const statItemsOrdered  = document.getElementById("profileStatItemsOrdered");
+
+// Mirrors the status vocabulary/labels used on the token tracking page,
+// so a given order status always reads the same way across the app.
+const STATUS_STEPS = ["PLACED", "PREPARING", "READY", "COMPLETED"];
+const STATUS_META = {
+  PLACED:    { label: "Order Received",   badgeClass: "badge-placed" },
+  PREPARING: { label: "Preparing",        badgeClass: "badge-preparing" },
+  READY:     { label: "Ready For Pickup", badgeClass: "badge-ready" },
+  COMPLETED: { label: "Collected",        badgeClass: "badge-completed" },
+  CANCELLED: { label: "Cancelled",        badgeClass: "badge-cancelled" },
+};
+const STEP_LABELS = ["Received", "Preparing", "Ready", "Collected"];
+
+function getStatusMeta(status) {
+  return STATUS_META[status] || { label: status, badgeClass: "badge-completed" };
+}
+
+function buildStepperHTML(status) {
+  if (status === "CANCELLED") {
+    return `<p class="order-step-cancelled">This order was cancelled.</p>`;
+  }
+
+  const currentIndex = STATUS_STEPS.indexOf(status);
+
+  return `
+    <div class="order-stepper" role="list" aria-label="Order status">
+      ${STATUS_STEPS.map((step, i) => {
+        const state = i < currentIndex ? "is-done" : i === currentIndex ? "is-current" : "";
+        return `
+          <div class="order-step ${state}" role="listitem">
+            <span class="order-step-dot" aria-hidden="true"></span>
+            <span class="order-step-label">${STEP_LABELS[i]}</span>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
 const logoutBtn          = document.getElementById("profileLogoutBtn");
 const logoutModalOverlay = document.getElementById("logoutModalOverlay");
 const cancelLogoutBtn    = document.getElementById("cancelLogoutBtn");
@@ -92,11 +132,13 @@ async function loadHistory() {
       historyList.replaceChildren();
       emptyHistoryState.innerHTML = defaultEmptyHistoryHTML;
       emptyHistoryState.hidden = false;
+      renderStats([]);
       return;
     }
 
     emptyHistoryState.hidden = true;
     historyList.replaceChildren(...orders.map(buildHistoryCard));
+    renderStats(orders);
   } catch (error) {
     console.error(error);
     historyList.replaceChildren();
@@ -106,6 +148,26 @@ async function loadHistory() {
       <p>Please check your connection and try again.</p>`;
     emptyHistoryState.hidden = false;
   }
+}
+
+function renderStats(orders) {
+  if (!statTotalOrders || !statTotalSpent || !statItemsOrdered) return;
+
+  const completedOrders = orders.filter((o) => o.status !== "CANCELLED");
+
+  const totalSpent = completedOrders.reduce(
+    (sum, o) => sum + (Number(o.totalAmount) || 0),
+    0
+  );
+
+  const itemsOrdered = completedOrders.reduce(
+    (sum, o) => sum + o.items.reduce((itemSum, i) => itemSum + (Number(i.quantity) || 0), 0),
+    0
+  );
+
+  statTotalOrders.textContent = String(orders.length);
+  statTotalSpent.textContent = formatCurrency(totalSpent);
+  statItemsOrdered.textContent = String(itemsOrdered);
 }
 
 function setHistoryLoading(loading) {
@@ -137,11 +199,7 @@ function buildHistoryCard(order) {
   const card = document.createElement("article");
   card.className = "history-card card";
 
-  const statusClass = {
-    Completed: "badge-completed",
-    Collected: "badge-ready",
-    Cancelled: "badge-cancelled",
-  }[order.status] || "badge-completed";
+  const statusMeta = getStatusMeta(order.status);
 
   const itemSummary = order.items
     .map((i) => i.quantity + " \u00D7 " + i.productName)
@@ -150,9 +208,10 @@ function buildHistoryCard(order) {
   card.innerHTML =
     '<div class="history-card-top">' +
       '<span class="history-token">' + order.tokenNumber + '</span>' +
-      '<span class="badge ' + statusClass + '">' + order.status + '</span>' +
+      '<span class="badge ' + statusMeta.badgeClass + '">' + statusMeta.label + '</span>' +
     '</div>' +
     '<p class="history-items">' + itemSummary + '</p>' +
+    buildStepperHTML(order.status) +
     '<div class="history-card-footer">' +
       '<span class="history-date">' + formatDate(order.createdAt) + '</span>' +
       '<span class="history-amount">' + formatCurrency(order.totalAmount) + '</span>' +

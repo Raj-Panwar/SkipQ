@@ -8,7 +8,7 @@ import {
   getQueueInfo,
   cancelOrder
 } from "./orderApi.js";
-import { getSession, requireAuth } from "../shared/auth.js";
+import { requireAuth } from "../shared/auth.js";
 
 requireAuth();
 
@@ -28,6 +28,7 @@ const cancelledMessage = document.getElementById("cancelledMessage");
 const progressSection = document.getElementById("progressSection");
 const waitEstimateRow = document.getElementById("waitEstimateRow");
 const queueTimelineSection = document.getElementById("queueTimelineSection");
+const completedMessage = document.getElementById("completedMessage");
 
 
 initStudentNav("token");
@@ -51,6 +52,7 @@ function formatToken(value) {
 
 async function initializeTokenPage() {
   tokenHeroCard?.classList.add("is-loading");
+  queueTimelineSection?.classList.add("is-loading");
 
   try {
 
@@ -64,7 +66,10 @@ async function initializeTokenPage() {
     await loadQueue();
 
     tokenHeroCard?.classList.remove("is-loading");
+    queueTimelineSection?.classList.remove("is-loading");
     myTokenNumberEl?.classList.add("token-reveal");
+
+    clearInterval(window.queueRefreshInterval);
 
     window.queueRefreshInterval = setInterval(loadQueue, 5000);
 
@@ -134,8 +139,8 @@ async function loadQueue() {
 
     renderQueueState(queue);
     pulseRefreshDot();
-    if (queue.status === "CANCELLED") {
-      clearInterval(queueRefreshInterval);
+    if (queue.status === "CANCELLED" || queue.status === "COMPLETED") {
+      clearInterval(window.queueRefreshInterval);
     }
 
   } catch (err) {
@@ -155,12 +160,18 @@ cancelOrderBtn.addEventListener("click", handleCancelOrder);
 function updateStatusBadge(status) {
   cancelOrderBtn.hidden = status !== "PLACED";
   const isCancelled = status === "CANCELLED";
-  cancelledMessage.hidden = !isCancelled;
+  const isCompleted = status === "COMPLETED";
+  const hideLiveTracking = isCancelled || isCompleted;
 
-  servingRow.hidden = isCancelled;
-  progressSection.hidden = isCancelled;
-  waitEstimateRow.hidden = isCancelled;
-  queueTimelineSection.hidden = isCancelled;
+  cancelledMessage.hidden = !isCancelled;
+  completedMessage.hidden = !isCompleted;
+
+  servingRow.hidden = hideLiveTracking;
+  progressSection.hidden = hideLiveTracking;
+  waitEstimateRow.hidden = hideLiveTracking;
+  queueTimelineSection.hidden = hideLiveTracking;
+
+  tokenHeroCard?.classList.toggle("is-ready", status === "READY");
 
   statusBadge.classList.remove(
     "badge-placed",

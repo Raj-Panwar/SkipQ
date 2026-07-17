@@ -85,7 +85,8 @@
 
   <main class="app-main page-fade-in">
 
-   <section class="welcome-block">
+   <div class="menu-hero-row">
+     <section class="welcome-block">
   <p class="welcome-greeting" id="welcomeGreeting">Welcome</p>
 
   <p class="welcome-insight">
@@ -106,6 +107,7 @@
         If you order now
     </div>
 </div>
+   </div>
 
     <nav class="category-tabs" id="categoryTabs" aria-label="Product categories">
       <button class="category-chip is-active" data-category="All" type="button">All</button>
@@ -134,7 +136,7 @@
     <a href="./cart.html" class="btn btn-primary" id="viewCartBtn">View cart</a>
   </div>
   <div id="notificationPanel" class="notification-panel" hidden>
-    <ul id="notificationList"></ul>
+    <ul id="notificationList" aria-live="polite"></ul>
   </div>
 
   <script type="module" src="../js/student/menuPage.js"></script>
