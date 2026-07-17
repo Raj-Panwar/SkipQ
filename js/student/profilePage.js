@@ -79,12 +79,18 @@ function renderProfile(profile) {
   memberSinceInput.value = profile.memberSince ? formatDate(profile.memberSince) : "\u2014";
 }
 
+const SKELETON_HISTORY_COUNT = 3;
+const defaultEmptyHistoryHTML = emptyHistoryState.innerHTML;
+
 async function loadHistory() {
+  setHistoryLoading(true);
+
   try {
     const orders = await getStudentOrders();
 
     if (!orders || orders.length === 0) {
       historyList.replaceChildren();
+      emptyHistoryState.innerHTML = defaultEmptyHistoryHTML;
       emptyHistoryState.hidden = false;
       return;
     }
@@ -93,7 +99,38 @@ async function loadHistory() {
     historyList.replaceChildren(...orders.map(buildHistoryCard));
   } catch (error) {
     console.error(error);
+    historyList.replaceChildren();
+    emptyHistoryState.innerHTML = `
+      <p class="empty-state-icon" aria-hidden="true">⚠️</p>
+      <h3>Couldn't load your orders</h3>
+      <p>Please check your connection and try again.</p>`;
+    emptyHistoryState.hidden = false;
   }
+}
+
+function setHistoryLoading(loading) {
+  if (!loading) return;
+  emptyHistoryState.hidden = true;
+  historyList.replaceChildren(
+    ...Array.from({ length: SKELETON_HISTORY_COUNT }, buildSkeletonHistoryCard)
+  );
+}
+
+function buildSkeletonHistoryCard() {
+  const card = document.createElement("article");
+  card.className = "history-card card is-skeleton";
+  card.setAttribute("aria-hidden", "true");
+  card.innerHTML = `
+    <div class="skeleton-history-line">
+      <div class="skeleton-text" style="width:70px;height:16px;"></div>
+      <div class="skeleton-text" style="width:80px;height:20px;border-radius:999px;"></div>
+    </div>
+    <div class="skeleton-text" style="width:60%;"></div>
+    <div class="skeleton-history-line" style="padding-top:8px;border-top:1px solid var(--color-border);">
+      <div class="skeleton-text" style="width:90px;"></div>
+      <div class="skeleton-text" style="width:60px;"></div>
+    </div>`;
+  return card;
 }
 
 function buildHistoryCard(order) {

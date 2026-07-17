@@ -17,11 +17,12 @@ import {
   getCurrentWaitEstimate
 } from "./orderApi.js";
 import { addToCart, addPrintJob, getCartCount, getCartTotal, getCart } from "./cartStore.js";
-import { getSession, getToken, requireAuth } from "../shared/auth.js";
+import { getSession, requireAuth } from "../shared/auth.js";
 import { formatCurrency } from "../utils/formatters.js";
 import { showToast } from "../shared/toast.js";
 import { initStudentNav } from "../shared/nav.js";
 import { initNotifications } from "./notification.js";
+import { getToken } from "../shared/auth.js";
 const LOW_STOCK_THRESHOLD = 10;
 const FILE_UPLOAD_API = "http://localhost:8080/api/files/upload";
 const productGrid = document.getElementById("productGrid");
@@ -68,7 +69,7 @@ async function init() {
     welcomeGreeting.textContent = `Welcome back, ${student.fullName.split(" ")[0]}`;
 
   }
-
+  
 
   async function loadCurrentServing() {
 
@@ -89,32 +90,32 @@ async function init() {
   }
   async function loadEstimatedWait() {
 
-    try {
+  try {
 
-      const data = await getCurrentWaitEstimate();
+    const data = await getCurrentWaitEstimate();
 
-      if (data.estimatedWaitMinutes == null) {
-        estimatedWaitText.textContent = "Calculating...";
-        return;
-      }
-
-      if (data.ordersAhead === 0) {
-        estimatedWaitText.textContent = "No waiting";
-        return;
-      }
-
-      estimatedWaitText.textContent =
-        `≈ ${data.estimatedWaitMinutes} min wait`;
-
-    } catch (e) {
-
-      estimatedWaitText.textContent = "--";
-
+    if (data.estimatedWaitMinutes == null) {
+      estimatedWaitText.textContent = "Calculating...";
+      return;
     }
 
+    if (data.ordersAhead === 0) {
+      estimatedWaitText.textContent = "No waiting";
+      return;
+    }
+
+    estimatedWaitText.textContent =
+      `≈ ${data.estimatedWaitMinutes} min wait`;
+
+  } catch (e) {
+
+    estimatedWaitText.textContent = "--";
+
   }
+
+}
   await loadCurrentServing();
-  setInterval(loadCurrentServing, 1000);
+  setInterval(loadCurrentServing, 5000);
 
   await loadEstimatedWait();
   setInterval(loadEstimatedWait, 30000);
@@ -127,7 +128,9 @@ async function init() {
     allProducts = fetched.filter((p) => p.status === "ACTIVE");
   } catch (error) {
     showToast("Could not load products. Please check your connection.", "error");
-    setGridLoading(false);
+    productGrid.replaceChildren();
+    emptyState.hidden = false;
+    emptyState.textContent = "Could not load products. Pull to refresh or check your connection.";
     return;
   }
 
@@ -139,7 +142,7 @@ async function init() {
   productGrid.addEventListener("click", handleGridClick);
 
   // window.addEventListener("focus", refreshProducts);
-
+  
 
 }
 
@@ -152,11 +155,30 @@ async function refreshProducts() {
   } catch { /* silent background refresh failure */ }
 }
 
+const SKELETON_CARD_COUNT = 6;
+
 function setGridLoading(loading) {
   if (loading) {
-    productGrid.innerHTML = `<p class="empty-state">Loading products…</p>`;
     emptyState.hidden = true;
+    productGrid.replaceChildren(
+      ...Array.from({ length: SKELETON_CARD_COUNT }, buildSkeletonProductCard)
+    );
   }
+}
+
+function buildSkeletonProductCard() {
+  const card = document.createElement("article");
+  card.className = "product-card is-skeleton";
+  card.setAttribute("aria-hidden", "true");
+  card.innerHTML = `
+    <div class="product-image-placeholder skeleton-block" style="height:96px;"></div>
+    <div class="skeleton-card-lines">
+      <div class="skeleton-text"></div>
+      <div class="skeleton-text"></div>
+      <div class="skeleton-text"></div>
+      <div class="skeleton-text"></div>
+    </div>`;
+  return card;
 }
 
 function handleSearch(event) {
@@ -179,10 +201,13 @@ async function uploadPdf(file) {
 
   formData.append("file", file);
 
+  const token = getToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
   const response = await fetch(FILE_UPLOAD_API, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getToken()}`
+        Authorization: `Bearer ${token}`
     },
     body: formData
   });
@@ -205,9 +230,10 @@ async function handleGridClick(event) {
 
   const addBtn = event.target.closest(".add-to-cart-btn");
   if (addBtn) {
+    if (addBtn.disabled) return; // guard against duplicate in-flight requests
     const card = addBtn.closest(".product-card");
     const productId = Number(card.dataset.productId);
-    handleAddToCart(productId, card);
+    handleAddToCart(productId, card, addBtn);
     return;
   }
 
@@ -244,10 +270,7 @@ async function handleGridClick(event) {
 
       updateCartUI();
 
-      showToast(
-        `Print job added — ${copies} × ${file.name}`,
-        "success"
-      );
+      showToast(`Print job added — ${copies} × ${file.name}`, "success");
 
     }
     catch (error) {
@@ -257,10 +280,7 @@ async function handleGridClick(event) {
         "error"
       );
 
-      return;
     }
-    //updateCartUI();
-    //showToast(`Print job added — ${copies} × ${file.name}`, "success");
   }
 }
 
@@ -302,7 +322,7 @@ function adjustQuantitySelector(card, productId, direction) {
  *   backend stock − quantity already in the cart for this product.
  * This means the student can never add more total units than exist.
  */
-async function handleAddToCart(productId, card) {
+async function handleAddToCart(productId, card, addBtn) {
   const product = allProducts.find((p) => p.id === productId);
   if (!product || (product.stock ?? 0) === 0) return;
 
@@ -333,13 +353,27 @@ async function handleAddToCart(productId, card) {
     );
   }
 
-  await addToCart(product, quantity);
-  updateCartUI();
-  renderProducts();
+  if (addBtn) {
+    addBtn.disabled = true;
+    addBtn.classList.add("is-loading");
+  }
 
+  try {
+    await addToCart(product, quantity);
+    updateCartUI();
+    renderProducts();
 
-  selectedQuantities.set(productId, 1);
-  showToast(`${product.name} added to cart`, "success");
+    selectedQuantities.set(productId, 1);
+    showToast(`${product.name} added to cart`, "success");
+  } finally {
+    // renderProducts() rebuilds the card from scratch on success, which
+    // already clears is-loading/disabled — this only matters if addToCart
+    // throws before that happens.
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.classList.remove("is-loading");
+    }
+  }
 }
 
 function getFilteredProducts() {

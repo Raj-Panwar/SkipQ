@@ -74,7 +74,14 @@ export function initInventorySection() {
     }
   });
 
+  setStatsLoading();
   renderAll();
+}
+
+function setStatsLoading() {
+  [statTotalProducts, statTotalStock, statOutOfStock, statLowStock].forEach((el) => {
+    if (el) el.innerHTML = `<span class="skeleton-text" style="width:28px;height:18px;display:inline-block;"></span>`;
+  });
 }
 
 async function renderAll() {
@@ -83,7 +90,7 @@ async function renderAll() {
     currentProducts = await getProducts();
   } catch (error) {
     showToast("Failed to load products: " + error.message, "error");
-    setTableLoading(false);
+    setTableLoadingError();
     return;
   }
   renderStats(currentProducts);
@@ -93,9 +100,19 @@ async function renderAll() {
 
 function setTableLoading(loading) {
   if (loading) {
-    productsTableBody.innerHTML = `
-      <tr class="table-empty"><td colspan="6">Loading products…</td></tr>`;
+    productsTableBody.innerHTML = Array.from({ length: 5 }, () => `
+      <tr class="skeleton-table-row">
+        ${Array.from({ length: 6 }, () => `<td><div class="skeleton-text"></div></td>`).join("")}
+      </tr>`).join("");
   }
+}
+
+function setTableLoadingError() {
+  productsTableBody.innerHTML = `
+    <tr class="table-empty"><td colspan="6">Couldn't load products. Please try again.</td></tr>`;
+  [statTotalProducts, statTotalStock, statOutOfStock, statLowStock].forEach((el) => {
+    if (el) el.textContent = "—";
+  });
 }
 
 /* ==========================================================

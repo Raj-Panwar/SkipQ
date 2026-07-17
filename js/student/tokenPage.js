@@ -1,12 +1,17 @@
 // js/student/tokenPage.js
+
 import { formatCurrency } from "../utils/formatters.js";
 import { initStudentNav } from "../shared/nav.js";
-import { requireAuth } from "../shared/auth.js";
+
 import {
   getActiveOrder,
   getQueueInfo,
   cancelOrder
 } from "./orderApi.js";
+import { getSession, requireAuth } from "../shared/auth.js";
+
+requireAuth();
+
 const myTokenNumberEl = document.getElementById("myTokenNumber");
 const statusBadge = document.getElementById("statusBadge");
 const nowServingNumberEl = document.getElementById("nowServingNumber");
@@ -14,6 +19,7 @@ const progressFill = document.getElementById("progressFill");
 const waitEstimateEl = document.getElementById("waitEstimate");
 const queuePositionEl = document.getElementById("queuePosition");
 const tokenTimeline = document.getElementById("tokenTimeline");
+const liveRefreshDot = document.getElementById("liveRefreshDot");
 const orderSummaryItems = document.getElementById("orderSummaryItems");
 const orderTotalEl = document.getElementById("orderTotal");
 const cancelOrderBtn = document.getElementById("cancelOrderBtn");
@@ -22,9 +28,10 @@ const cancelledMessage = document.getElementById("cancelledMessage");
 const progressSection = document.getElementById("progressSection");
 const waitEstimateRow = document.getElementById("waitEstimateRow");
 const queueTimelineSection = document.getElementById("queueTimelineSection");
-requireAuth();
+
 
 initStudentNav("token");
+const tokenHeroCard = document.querySelector(".token-hero-card");
 let order;
 let myTokenValue = 0;
 let nowServingValue = 0;
@@ -40,7 +47,10 @@ function parseTokenNumber(token) {
 function formatToken(value) {
   return `#${String(value).padStart(3, "0")}`;
 }
+
+
 async function initializeTokenPage() {
+  tokenHeroCard?.classList.add("is-loading");
 
   try {
 
@@ -52,6 +62,9 @@ async function initializeTokenPage() {
     renderOrderSummary(order);
 
     await loadQueue();
+
+    tokenHeroCard?.classList.remove("is-loading");
+    myTokenNumberEl?.classList.add("token-reveal");
 
     window.queueRefreshInterval = setInterval(loadQueue, 5000);
 
@@ -120,6 +133,7 @@ async function loadQueue() {
     nowServingValue = queue.currentServing;
 
     renderQueueState(queue);
+    pulseRefreshDot();
     if (queue.status === "CANCELLED") {
       clearInterval(queueRefreshInterval);
     }
@@ -127,6 +141,14 @@ async function loadQueue() {
   } catch (err) {
     console.error(err);
   }
+}
+
+function pulseRefreshDot() {
+  if (!liveRefreshDot) return;
+  liveRefreshDot.classList.remove("is-pulsing");
+  // Force reflow so the animation can restart on consecutive polls.
+  void liveRefreshDot.offsetWidth;
+  liveRefreshDot.classList.add("is-pulsing");
 }
 
 cancelOrderBtn.addEventListener("click", handleCancelOrder);

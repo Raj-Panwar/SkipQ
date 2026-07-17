@@ -7,23 +7,23 @@ import {
 
 let notificationPollHandle = null;
 let previousUnreadCount = 0;
-export function initNotifications(studentId, pollIntervalMs = 15000) {
-    refreshNotifications(studentId);
-    notificationPollHandle = setInterval(() => refreshNotifications(studentId), pollIntervalMs);
+export function initNotifications(pollIntervalMs = 15000) {
+    refreshNotifications();
+    notificationPollHandle = setInterval(() => refreshNotifications(), pollIntervalMs);
 
     const bell = document.getElementById("notificationBell");
     if (bell) {
-        bell.addEventListener("click", () => toggleNotificationPanel(studentId));
+        bell.addEventListener("click", () => toggleNotificationPanel());
     }
 }
 
-async function refreshNotifications(studentId) {
+async function refreshNotifications() {
     try {
-        const data = await getUnreadCount(studentId);
+        const data = await getUnreadCount();
         const unread = data.unreadCount;
 
         if (unread > previousUnreadCount) {
-            const notifications = await getNotifications(studentId);
+            const notifications = await getNotifications();
 
             if (notifications.length > 0) {
                 showToast(notifications[0]);
@@ -42,7 +42,7 @@ function updateBadge(count) {
     const badge = document.getElementById("notificationBadge");
     if (!badge) return;
 
-    badge.hidden = false;
+    badge.hidden = count <= 0;
     badge.textContent = count;
     const bell = document.getElementById("notificationBell");
 
@@ -55,26 +55,37 @@ function updateBadge(count) {
     }
 }
 
-async function toggleNotificationPanel(studentId) {
+async function toggleNotificationPanel() {
     const panel = document.getElementById("notificationPanel");
     if (!panel) return;
 
     const isOpening = panel.hidden;
 
     if (isOpening) {
-        await loadNotificationList(studentId);
+        await loadNotificationList();
         panel.hidden = false;
     } else {
         panel.hidden = true;
     }
 }
 
-async function loadNotificationList(studentId) {
+async function loadNotificationList() {
     const list = document.getElementById("notificationList");
     if (!list) return;
 
+    list.innerHTML = Array.from({ length: 3 }, () => `
+      <li class="notification-skeleton-item">
+        <div class="notification-item">
+          <div class="skeleton-circle" style="width:22px;height:22px;"></div>
+          <div class="notification-content">
+            <div class="skeleton-text" style="width:85%;"></div>
+            <div class="skeleton-text" style="width:35%;margin-top:6px;height:9px;"></div>
+          </div>
+        </div>
+      </li>`).join("");
+
     try {
-        const notifications = await getNotifications(studentId);
+        const notifications = await getNotifications();
 
         list.innerHTML = "";
 
@@ -115,11 +126,12 @@ async function loadNotificationList(studentId) {
         }
 
         // mark all as read now that the student has opened the panel
-        await markAllNotificationsRead(studentId);
+        await markAllNotificationsRead();
         updateBadge(0);
 
     } catch (err) {
         console.error("Failed to load notifications:", err);
+        list.innerHTML = "<li>Couldn't load notifications. Try again shortly.</li>";
     }
 }
 function formatTimeAgo(dateString) {

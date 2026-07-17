@@ -75,9 +75,13 @@ function injectBottomNav(activeId) {
 
   document.body.appendChild(nav);
 
-  // Add bottom padding to main content so the nav doesn't cover it
+  // Add bottom padding to main content so the nav doesn't cover it,
+  // and a soft fade-in so navigating between pages doesn't feel like
+  // an instant cut.
   const main = document.querySelector(".app-main, main");
-  if (main) main.classList.add("has-bottom-nav");
+  if (main) {
+    main.classList.add("has-bottom-nav", "page-fade-in");
+  }
 
   const notificationsBtn = document.getElementById("navNotificationsBtn");
   notificationsBtn?.addEventListener("click", () => {

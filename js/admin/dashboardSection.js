@@ -33,15 +33,28 @@ import { getCollegeByCode } from "./collegeApi.js";
 const REFRESH_INTERVAL_MS = 30_000;
 
 let refreshTimer = null;
+let statsEverLoaded = false;
+let lowStockEverLoaded = false;
 
+const STAT_IDS = [
+  "statOrdersToday",
+  "statActiveOrders",
+  "statReadyOrders",
+  "statPendingPrint",
+  "statRevenueToday",
+  "statLowStockProducts",
+];
 export function initDashboardSection(admin) {
   renderAdminInfo(admin);
   renderCollegeInfo(admin);
+  setRecentActivityLoading();
+  setStatsLoading();
 
   refreshAll();
 
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL_MS);
+  
 }
 
 // ---------------------------------------------------------------------------
@@ -79,18 +92,33 @@ async function refreshAll() {
     const stats = await getDashboardStats();
     renderStats(stats);
     renderRecentActivity(stats.orders);
+    statsEverLoaded = true;
   } catch (error) {
     // Silent — the Orders section surfaces its own load errors via
     // toast, and the Dashboard simply keeps its last-known values
     // rather than interrupting the admin with a duplicate error.
     console.error("Dashboard refresh failed:", error);
+
+    // Exception: if this is the very first load, there are no
+    // last-known values to fall back on — the skeletons would
+    // otherwise shimmer forever.
+    if (!statsEverLoaded) {
+      STAT_IDS.forEach((id) => setStat(id, "—"));
+      const revenueEl = document.getElementById("statRevenueToday");
+      if (revenueEl) revenueEl.textContent = "—";
+      setRecentActivityError();
+    }
   }
 
   try {
     const lowStock = await getLowStockProducts();
     setStat("statLowStockProducts", lowStock.length);
+    lowStockEverLoaded = true;
   } catch (error) {
     console.error("Low stock fetch failed:", error);
+    if (!lowStockEverLoaded) {
+      setStat("statLowStockProducts", "—");
+    }
   }
 }
 
@@ -110,6 +138,30 @@ function renderStats(stats) {
 function setStat(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = String(value);
+}
+
+function setStatsLoading() {
+  STAT_IDS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<span class="skeleton-text" style="width:32px;height:18px;display:inline-block;"></span>`;
+  });
+}
+
+function setRecentActivityLoading() {
+  const list = document.getElementById("recentActivityList");
+  if (!list) return;
+  list.innerHTML = Array.from({ length: 4 }, () => `
+    <li class="recent-activity-item">
+      <span class="skeleton-circle" style="width:8px;height:8px;"></span>
+      <span class="recent-activity-text"><div class="skeleton-text" style="width:70%;"></div></span>
+      <span class="recent-activity-time"><div class="skeleton-text" style="width:40px;"></div></span>
+    </li>`).join("");
+}
+
+function setRecentActivityError() {
+  const list = document.getElementById("recentActivityList");
+  if (!list) return;
+  list.innerHTML = `<li class="recent-activity-empty">Couldn't load recent activity.</li>`;
 }
 
 function renderRecentActivity(orders) {
@@ -164,4 +216,10 @@ function formatTimeAgo(iso) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)} hr ago`;
   return `${Math.floor(seconds / 86400)} day ago`;
+}
+export function destroyDashboardSection() {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
 }

@@ -194,11 +194,11 @@ function renderPageInfo(page) {
   const end = Math.min((page.number + 1) * page.size, page.totalElements);
 
   ordersPageInfo.innerHTML = `
-    <b>${page.totalElements}</b>Orders
-    •
-    Showing<b>${start}-${end}</b>
-    •
-    Page<b>${page.number + 1}</b> of <b>${page.totalPages}</b>
+<b>${page.totalElements}</b> Orders
+•
+Showing <b>${start}-${end}</b>
+•
+Page <b>${page.number + 1}</b> of <b>${page.totalPages}</b>
 `;
 }
 
@@ -230,28 +230,24 @@ function buildOrderRow(order) {
       ${formatTime(order.createdAt)}
     </td>
     <td class="table-cell table-actions">
-      ${
-        isTerminal
-          ? `<span class="action-done">—</span>`
-          : `<div class="action-btn-group">
-             ${
-               order.status === "PLACED"
-                 ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="PREPARING">Accept</button>`
-                 : ""
-             }
-             ${
-               order.status === "PREPARING"
-                 ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="READY">Mark Ready</button>`
-                 : ""
-             }
-             ${
-               order.status === "READY"
-                 ? `<button class="btn btn-sm btn-primary order-action-btn" data-next="COMPLETED">Mark Served</button>`
-                 : ""
-             }
+      ${isTerminal
+      ? `<span class="action-done">—</span>`
+      : `<div class="action-btn-group">
+             ${order.status === "PLACED"
+        ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="PREPARING">Accept</button>`
+        : ""
+      }
+             ${order.status === "PREPARING"
+        ? `<button class="btn btn-sm btn-secondary order-action-btn" data-next="READY">Mark Ready</button>`
+        : ""
+      }
+             ${order.status === "READY"
+        ? `<button class="btn btn-sm btn-primary order-action-btn" data-next="COMPLETED">Mark Served</button>`
+        : ""
+      }
              <button class="btn btn-sm btn-danger order-action-btn" data-next="CANCELLED">Cancel</button>
            </div>`
-      }
+    }
     </td>
   `;
 
@@ -290,11 +286,13 @@ function buildItemsSummary(items) {
 
 async function handleOrderAction(event) {
   const btn = event.target.closest(".order-action-btn");
-  if (!btn) return;
+  if (!btn || btn.disabled) return;
 
   const row = btn.closest("tr");
   const orderId = Number(row.dataset.orderId);
   const nextStatus = btn.dataset.next;
+
+  btn.disabled = true;
 
   try {
     await updateOrderStatus(orderId, nextStatus);
@@ -302,6 +300,7 @@ async function handleOrderAction(event) {
     await renderAll();
   } catch (error) {
     showToast(error.message, "error");
+    btn.disabled = false;
   }
 }
 
@@ -375,10 +374,9 @@ function buildPrintRow(job) {
       Download PDF
     </a>
 
-    ${
-      isDone
-        ? `<span class="action-done">Done</span>`
-        : `<button
+    ${isDone
+      ? `<span class="action-done">Done</span>`
+      : `<button
              class="btn btn-sm btn-primary print-action-btn"
              data-order-id="${job.orderId}">
              Mark Done
@@ -394,9 +392,11 @@ function buildPrintRow(job) {
 
 async function handlePrintAction(event) {
   const btn = event.target.closest(".print-action-btn");
-  if (!btn) return;
+  if (!btn || btn.disabled) return;
 
   const orderId = Number(btn.dataset.orderId);
+
+  btn.disabled = true;
 
   try {
     await updateOrderStatus(orderId, "COMPLETED");
@@ -404,17 +404,23 @@ async function handlePrintAction(event) {
     await renderAll();
   } catch (error) {
     showToast(error.message, "error");
+    btn.disabled = false;
   }
 }
 
 // ---------------------------------------------------------------------------
 // Loading / error states
 // ---------------------------------------------------------------------------
+function skeletonRows(colCount, rowCount = 5) {
+  return Array.from({ length: rowCount }, () => `
+    <tr class="skeleton-table-row">
+      ${Array.from({ length: colCount }, () => `<td><div class="skeleton-text"></div></td>`).join("")}
+    </tr>`).join("");
+}
+
 function setTablesLoading() {
-  ordersTableBody.innerHTML = `
-    <tr class="table-empty"><td colspan="7">Loading orders…</td></tr>`;
-  printTableBody.innerHTML = `
-    <tr class="table-empty"><td colspan="7">Loading print jobs…</td></tr>`;
+  ordersTableBody.innerHTML = skeletonRows(7);
+  printTableBody.innerHTML = skeletonRows(7, 3);
 }
 
 function setTablesError() {
@@ -461,4 +467,10 @@ function statusBadgeClass(status) {
       CANCELLED: "badge-cancelled",
     }[status] ?? "badge-placed"
   );
+}
+export function destroyOrdersSection() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
 }

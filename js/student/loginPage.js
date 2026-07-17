@@ -1,4 +1,3 @@
-
 // js/student/loginPage.js
 // Page controller for student/login.html.
 // Reads the selected college from sessionStorage, loads that college's public
@@ -8,6 +7,7 @@ import { loginStudent } from "../api/studentApi.js";
 import { setSession, isLoggedIn } from "../shared/auth.js";
 import { isValidEmail, isValidPassword } from "../utils/validators.js";
 import { getPreLoginQueue } from "./orderApi.js";
+import { showToast } from "../shared/toast.js";
 
 const SELECTED_COLLEGE_CODE_KEY = "selectedCollegeCode";
 const SELECTED_COLLEGE_NAME_KEY = "selectedCollegeName";
@@ -77,10 +77,12 @@ form.addEventListener("submit", async (event) => {
     });
 
     setSession(student);
-    window.location.href = "./menu.html";
+    showToast(`Welcome back, ${student.fullName?.split(" ")[0] || "there"}!`, "success", 1200);
+    setTimeout(() => {
+      window.location.href = "./menu.html";
+    }, 500);
   } catch (error) {
     showAlert(error.message || "Login failed. Please try again.");
-  } finally {
     setLoading(false);
   }
 });

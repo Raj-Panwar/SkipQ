@@ -151,6 +151,7 @@ async function handleListClick(event) {
 
   const stepBtn = event.target.closest(".qty-step");
   if (stepBtn) {
+    if (stepBtn.disabled) return; // guard against duplicate in-flight requests
     const direction = stepBtn.dataset.direction === "increase" ? 1 : -1;
     const items     = getCart();
     const item      = items.find((i) => i.cartItemId === cartItemId);
@@ -159,6 +160,8 @@ async function handleListClick(event) {
     if (item.itemType === "stationery") {
 
     const beforeQty = item.quantity;
+    const stepButtons = row.querySelectorAll(".qty-step");
+    stepButtons.forEach((b) => (b.disabled = true));
 
     await setQuantity(
         cartItemId,
@@ -223,8 +226,6 @@ async function handleCheckout() {
     return;
 }
 const payload = {
-    // studentId is intentionally omitted — the server derives it from the
-    // JWT and ignores any client-supplied value.
     studentName: student.fullName,
 
     items: items.map(item => {
@@ -267,8 +268,6 @@ originalFileName: item.originalFileName,
 
     clearCart();
 
-    render();
-
     showToast(
         "Order placed successfully!",
         "success"
@@ -285,9 +284,6 @@ catch(error){
         error.message || "Checkout failed.",
         "error"
     );
-
-}
-finally{
 
     setCheckoutLoading(false);
 
