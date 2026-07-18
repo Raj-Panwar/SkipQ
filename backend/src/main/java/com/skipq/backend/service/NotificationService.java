@@ -3,6 +3,7 @@ package com.skipq.backend.service;
 import com.skipq.backend.entity.Notification;
 import com.skipq.backend.entity.Order;
 import com.skipq.backend.entity.Product;
+import com.skipq.backend.exception.NotificationAccessDeniedException;
 import com.skipq.backend.repository.NotificationRepository;
 import com.skipq.backend.security.AppUserPrincipal;
 
@@ -67,7 +68,6 @@ public class NotificationService {
 
     @Transactional
     public void notifyOrderCancelled(Order order) {
- 
 
         String message = order.getStudent().getFullName()
                 + " cancelled Token #"
@@ -121,12 +121,40 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(Long notificationId,
-                       AppUserPrincipal principal) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
-        notification.setRead(true);
-        notificationRepository.save(notification);
+            AppUserPrincipal principal) {
+
+        if (principal.isStudent()) {
+
+            Notification notification = notificationRepository
+                    .findByIdAndStudent_Id(notificationId, principal.getId())
+                    .orElseThrow(() -> new NotificationAccessDeniedException(
+                            "Notification not found or access denied"));
+
+            notification.setRead(true);
+            return;
+        }
+
+        if (principal.isAdmin()) {
+
+            Notification notification = notificationRepository
+                    .findByIdAndCollege_IdAndStudentIsNull(
+                            notificationId,
+                            principal.getCollegeId())
+                    .orElseThrow(() -> new NotificationAccessDeniedException(
+                            "Notification not found or access denied"));
+
+            notification.setRead(true);
+            return;
+        }
+
+        throw new NotificationAccessDeniedException(
+                "You do not have permission to modify this notification");
     }
+
+    // Students may only mark their own notifications; admins may only mark
+    // admin-facing notifications (student IS NULL) belonging to their own
+    // college. This is the single gate that markAsRead relies on instead of
+    // trusting the notification id by itself.
 
     @Transactional
     public void markAllAsRead(Long studentId) {

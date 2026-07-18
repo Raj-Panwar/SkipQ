@@ -219,6 +219,7 @@ function buildOrderRow(order) {
     </td>
     <td class="table-cell table-items">
       ${buildItemsSummary(order.items)}
+      ${buildOrderNotesLine(order.notes)}
     </td>
     <td class="table-cell">
       <span class="admin-amount">${formatCurrency(order.totalAmount)}</span>
@@ -282,6 +283,21 @@ function buildItemsSummary(items) {
     })
     .join("");
 
+}
+
+function buildOrderNotesLine(notes) {
+  const hasNotes = notes && notes.trim().length > 0;
+  return `
+    <div class="order-notes-line${hasNotes ? "" : " order-notes-line-empty"}">
+      📝 ${hasNotes ? escapeHtml(notes) : "No notes"}
+    </div>
+  `;
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
 }
 
 async function handleOrderAction(event) {

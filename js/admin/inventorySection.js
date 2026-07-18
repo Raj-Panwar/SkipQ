@@ -12,8 +12,12 @@
 //     sidebar Logout button.
 // No functionality, API call, or business rule has changed.
 
-import { getProducts, createProduct, updateProduct, deleteProduct } from "./productApi.js";
+import { getProducts, createProduct, updateProduct, deleteProduct, uploadProductImage } from "./productApi.js";
 import { showToast } from "../shared/toast.js";
+
+const FILE_API = "http://localhost:8080/api/files";
+const DEFAULT_IMAGE_HINT = "JPG, PNG or WEBP · Max 5MB";
+const NEW_PRODUCT_IMAGE_HINT = "Save the product first, then add an image.";
 
 let pendingDeleteId = null;
 let currentProducts = [];
@@ -24,6 +28,7 @@ let productModalOverlay, productModalTitle, productForm, productIdInput;
 let productNameInput, productCategoryInput, productDescriptionInput;
 let productPriceInput, productStockInput, closeModalBtn, cancelModalBtn, saveProductBtn;
 let deleteModalOverlay, deleteModalText, cancelDeleteBtn, confirmDeleteBtn;
+let productImagePreviewImg, productImagePreviewPlaceholder, productImageFileInput, productImageUploadBtn, productImageHint;
 
 export function initInventorySection() {
   statTotalProducts = document.getElementById("statTotalProducts");
@@ -46,6 +51,12 @@ export function initInventorySection() {
   cancelModalBtn = document.getElementById("cancelModalBtn");
   saveProductBtn = document.getElementById("saveProductBtn");
 
+  productImagePreviewImg = document.getElementById("productImagePreviewImg");
+  productImagePreviewPlaceholder = document.getElementById("productImagePreviewPlaceholder");
+  productImageFileInput = document.getElementById("productImageFileInput");
+  productImageUploadBtn = document.getElementById("productImageUploadBtn");
+  productImageHint = document.getElementById("productImageHint");
+
   deleteModalOverlay = document.getElementById("deleteModalOverlay");
   deleteModalText = document.getElementById("deleteModalText");
   cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
@@ -60,6 +71,9 @@ export function initInventorySection() {
 
   productForm.addEventListener("submit", handleProductFormSubmit);
   productsTableBody.addEventListener("click", handleTableClick);
+
+  productImageUploadBtn.addEventListener("click", () => productImageFileInput.click());
+  productImageFileInput.addEventListener("change", handleImageFileSelected);
 
   cancelDeleteBtn.addEventListener("click", closeDeleteModal);
   confirmDeleteBtn.addEventListener("click", handleConfirmDelete);
@@ -185,12 +199,15 @@ function buildProductRow(product) {
   tr.innerHTML = `
     <td class="table-cell">
       <div class="table-product">
-        <span class="table-product-image-placeholder" aria-hidden="true">
+        ${product.imagePath
+          ? `<img class="table-product-image" src="${FILE_API}/${product.imagePath}" alt="${product.name}" loading="lazy" decoding="async">`
+          : `<span class="table-product-image-placeholder" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
             <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-        </span>
+        </span>`
+        }
         <div class="table-product-info">
           <span class="table-product-name">${product.name}</span>
           <span class="table-product-desc">${product.description ?? ""}</span>
@@ -274,6 +291,8 @@ function openCreateModal() {
   productForm.reset();
   productIdInput.value = "";
   clearFormErrors();
+  setImagePreview(null);
+  setImageUploadEnabled(false, NEW_PRODUCT_IMAGE_HINT);
   productModalOverlay.hidden = false;
   productNameInput.focus();
 }
@@ -292,6 +311,10 @@ function openEditModal(productId) {
 
   const productStatusInput = document.getElementById("productStatus");
   if (productStatusInput) productStatusInput.value = product.status ?? "ACTIVE";
+
+  setImagePreview(product.imagePath);
+  setImageUploadEnabled(true, DEFAULT_IMAGE_HINT);
+  productImageUploadBtn.textContent = product.imagePath ? "Replace image" : "Upload image";
 
   clearFormErrors();
   productModalOverlay.hidden = false;
@@ -369,6 +392,71 @@ function showFieldError(id, message) {
   const el = document.getElementById(id);
   el.textContent = message;
   el.hidden = false;
+}
+
+/* ==========================================================
+   Product image upload
+========================================================== */
+
+function setImagePreview(imagePath) {
+  if (imagePath) {
+    productImagePreviewImg.src = `${FILE_API}/${imagePath}`;
+    productImagePreviewImg.hidden = false;
+    productImagePreviewPlaceholder.hidden = true;
+  } else {
+    productImagePreviewImg.hidden = true;
+    productImagePreviewImg.src = "";
+    productImagePreviewPlaceholder.hidden = false;
+  }
+}
+
+function setImageUploadEnabled(enabled, hint) {
+  productImageUploadBtn.disabled = !enabled;
+  productImageHint.textContent = hint;
+  if (enabled) {
+    productImageUploadBtn.textContent = "Upload image";
+  }
+}
+
+async function handleImageFileSelected() {
+  const file = productImageFileInput.files[0];
+  productImageFileInput.value = ""; // allow re-selecting the same file later
+
+  if (!file) return;
+
+  const productId = productIdInput.value;
+  if (!productId) return;
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    showToast("Only JPG, PNG or WEBP images are allowed.", "error");
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("Image must be 5MB or smaller.", "error");
+    return;
+  }
+
+  productImageUploadBtn.disabled = true;
+  productImageUploadBtn.classList.add("is-loading");
+
+  try {
+    const updated = await uploadProductImage(Number(productId), file);
+
+    setImagePreview(updated.imagePath);
+    productImageUploadBtn.textContent = "Replace image";
+
+    const index = currentProducts.findIndex((p) => p.id === updated.id);
+    if (index !== -1) currentProducts[index] = updated;
+
+    renderProductsTable(currentProducts);
+    showToast("Product image updated", "success");
+  } catch (error) {
+    showToast("Failed to upload image: " + error.message, "error");
+  } finally {
+    productImageUploadBtn.disabled = false;
+    productImageUploadBtn.classList.remove("is-loading");
+  }
 }
 
 /* ==========================================================

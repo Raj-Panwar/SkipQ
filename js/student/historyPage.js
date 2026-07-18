@@ -124,6 +124,9 @@ function buildCard(order) {
       <span class="badge ${statusMeta.badgeClass}">${statusMeta.label}</span>
     </div>
     <p class="history-items">${itemSummary}</p>
+    <p class="history-notes${order.notes ? "" : " history-notes-empty"}">
+      ${order.notes ? escapeHtml(order.notes) : "No notes"}
+    </p>
     ${buildStepperHTML(order.status)}
     <div class="history-card-footer">
       <span class="history-date">${formatDate(order.createdAt)}</span>
@@ -132,4 +135,10 @@ function buildCard(order) {
   `;
 
   return card;
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
 }

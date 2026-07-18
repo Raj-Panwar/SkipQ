@@ -22,6 +22,7 @@ const tokenTimeline = document.getElementById("tokenTimeline");
 const liveRefreshDot = document.getElementById("liveRefreshDot");
 const orderSummaryItems = document.getElementById("orderSummaryItems");
 const orderTotalEl = document.getElementById("orderTotal");
+const orderNotesDisplay = document.getElementById("orderNotesDisplay");
 const cancelOrderBtn = document.getElementById("cancelOrderBtn");
 const servingRow = document.getElementById("servingRow");
 const cancelledMessage = document.getElementById("cancelledMessage");
@@ -97,6 +98,19 @@ function renderOrderSummary(order) {
   );
 
   orderTotalEl.textContent = formatCurrency(order.totalAmount);
+
+  orderNotesDisplay.innerHTML = `
+    <span class="order-notes-label">Order notes</span>
+    <p class="order-notes-text${order.notes ? "" : " order-notes-empty"}">
+      ${order.notes ? escapeHtml(order.notes) : "No notes"}
+    </p>
+  `;
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
 }
 
 function renderQueueState(queue) {

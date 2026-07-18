@@ -54,6 +54,11 @@ export function initNotifications(pollIntervalMs = 15000) {
     if (bell) {
         bell.addEventListener("click", () => toggleNotificationPanel());
     }
+
+    const markAllBtn = document.getElementById("markAllReadBtn");
+    if (markAllBtn) {
+        markAllBtn.addEventListener("click", () => handleMarkAllRead());
+    }
 }
 
 async function refreshNotifications() {
@@ -106,8 +111,9 @@ async function toggleNotificationPanel() {
     const isOpening = panel.hidden;
 
     if (isOpening) {
-        await loadNotificationList();
         panel.hidden = false;
+        await loadNotificationList();
+        
     } else {
         panel.hidden = true;
     }
@@ -144,6 +150,7 @@ async function loadNotificationList() {
             notifications.forEach(n => {
                 const item = document.createElement("li");
                 item.className = n.read ? "notif-read" : "notif-unread";
+                item.dataset.id = n.id;
 
                 item.innerHTML = `
     <div class="notification-item">
@@ -155,15 +162,20 @@ async function loadNotificationList() {
                 ${formatTimeAgo(n.createdAt)}
             </div>
         </div>
+
+        ${!n.read
+            ? `<button type="button" class="notification-mark-read-btn" data-id="${n.id}">Mark read</button>`
+            : ""
+        }
     </div>
 `;
                 list.appendChild(item);
             });
-        }
 
-        // mark all as read now that the student has opened the panel
-        await markAllNotificationsRead();
-        updateBadge(0);
+            list.querySelectorAll(".notification-mark-read-btn").forEach(button => {
+                button.addEventListener("click", () => handleMarkOneRead(button.dataset.id));
+            });
+        }
 
     } catch (err) {
         console.error("Failed to load notifications:", err);
@@ -172,6 +184,52 @@ async function loadNotificationList() {
             <p class="notification-empty-title">Couldn't load notifications</p>
             <p class="notification-empty-text">Please try again shortly.</p>
           </li>`;
+    }
+}
+
+// Marks a single notification read without reloading the whole list —
+// updates just that <li> in place and adjusts the badge locally. Polling
+// (refreshNotifications) stays responsible for reconciling with the server
+// in the background.
+async function handleMarkOneRead(id) {
+    const list = document.getElementById("notificationList");
+    const item = list?.querySelector(`li[data-id="${id}"]`);
+
+    try {
+        await markNotificationRead(id);
+
+        if (item) {
+            item.className = "notif-read";
+            const btn = item.querySelector(".notification-mark-read-btn");
+            btn?.remove();
+        }
+
+        if (previousUnreadCount !== null && previousUnreadCount > 0) {
+            previousUnreadCount -= 1;
+        }
+        updateBadge(previousUnreadCount ?? 0);
+    } catch (err) {
+        console.error("Failed to mark notification as read:", err);
+    }
+}
+
+// Marks everything read via one request, then updates the already-rendered
+// list items locally instead of refetching from the server.
+async function handleMarkAllRead() {
+    const list = document.getElementById("notificationList");
+
+    try {
+        await markAllNotificationsRead();
+
+        list?.querySelectorAll("li.notif-unread").forEach(item => {
+            item.className = "notif-read";
+            item.querySelector(".notification-mark-read-btn")?.remove();
+        });
+
+        previousUnreadCount = 0;
+        updateBadge(0);
+    } catch (err) {
+        console.error("Failed to mark all notifications as read:", err);
     }
 }
 function formatTimeAgo(dateString) {

@@ -1,10 +1,12 @@
 package com.skipq.backend.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import com.skipq.backend.entity.College;
 import com.skipq.backend.repository.CollegeRepository;
 import com.skipq.backend.constants.InventoryConstants;
@@ -19,6 +21,9 @@ public class ProductService {
 
     @Autowired
     private CollegeRepository collegeRepository;
+
+    @Autowired
+    private ProductImageStorageService productImageStorageService;
 
     public List<Product> getAllProducts(Long collegeId) {
 
@@ -69,9 +74,36 @@ public class ProductService {
     public void deleteProduct(Long id, Long collegeId) {
         Product product = getProductById(id, collegeId);
 
-        
+        try {
+            productImageStorageService.deleteProductImage(product.getImagePath());
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to delete product image: " + ex.getMessage());
+        }
 
         repository.delete(product);
+    }
+
+    /**
+     * Uploads (or replaces) the image for a product, scoped to the calling
+     * admin's college via the existing getProductById check. If the product
+     * already has an image, the previous file is deleted from disk before
+     * the new one is stored, so no orphan files accumulate.
+     */
+    public Product updateProductImage(Long id, Long collegeId, MultipartFile file) throws IOException {
+        Product product = getProductById(id, collegeId);
+
+        String previousImagePath = product.getImagePath();
+
+        String newImagePath = productImageStorageService.storeProductImage(file);
+        product.setImagePath(newImagePath);
+
+        Product saved = repository.save(product);
+
+        if (previousImagePath != null && !previousImagePath.equals(newImagePath)) {
+            productImageStorageService.deleteProductImage(previousImagePath);
+        }
+
+        return saved;
     }
 
    @Transactional(readOnly = true)

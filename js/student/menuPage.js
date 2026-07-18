@@ -25,6 +25,7 @@ import { initNotifications } from "./notification.js";
 import { getToken } from "../shared/auth.js";
 const LOW_STOCK_THRESHOLD = 10;
 const FILE_UPLOAD_API = "http://localhost:8080/api/files/upload";
+const FILE_API = "http://localhost:8080/api/files";
 const productGrid = document.getElementById("productGrid");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
@@ -421,12 +422,15 @@ function buildProductCard(product) {
   const showsStock = !isPrinting;
 
   card.innerHTML = `
-    <div class="product-image-placeholder" aria-hidden="true">
+    ${product.imagePath
+      ? `<img class="product-image" src="${FILE_API}/${product.imagePath}" alt="${product.name}" loading="lazy" decoding="async">`
+      : `<div class="product-image-placeholder" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
         <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-    </div>
+    </div>`
+    }
     <div class="product-card-body">
       <span class="product-category-tag">${product.category ?? ""}</span>
       <h3 class="product-name">${product.name}</h3>

@@ -175,6 +175,7 @@ public class OrderService {
         }
 
         order.setStatus("PLACED");
+        order.setNotes(request.getNotes());
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 

@@ -27,6 +27,7 @@ const orderSummaryCard = document.getElementById("orderSummaryCard");
 const summarySubtotal  = document.getElementById("summarySubtotal");
 const summaryItemCount = document.getElementById("summaryItemCount");
 const summaryTotal     = document.getElementById("summaryTotal");
+const orderNotesInput  = document.getElementById("orderNotesInput");
 const checkoutBtn      = document.getElementById("checkoutBtn");
 
 initStudentNav("cart");
@@ -228,6 +229,8 @@ async function handleCheckout() {
 const payload = {
     studentName: student.fullName,
 
+    notes: orderNotesInput.value.trim() === "" ? null : orderNotesInput.value.trim(),
+
     items: items.map(item => {
 
         if (item.itemType === "print") {
@@ -267,6 +270,7 @@ originalFileName: item.originalFileName,
     );
 
     clearCart();
+    orderNotesInput.value = "";
 
     showToast(
         "Order placed successfully!",

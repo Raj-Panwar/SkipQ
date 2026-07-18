@@ -1,6 +1,7 @@
 // js/admin/productApi.js
 
 const BASE_URL = "http://localhost:8080/api/products";
+const ADMIN_PRODUCTS_BASE_URL = "http://localhost:8080/api/admin/products";
 
 async function request(url, options = {}) {
 
@@ -8,13 +9,15 @@ async function request(url, options = {}) {
     sessionStorage.getItem("skipq_admin")
   );
 
+  const isFormData = options.body instanceof FormData;
+
   let response;
 
   try {
 
     response = await fetch(url, {
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...(admin?.token ? { Authorization: `Bearer ${admin.token}` } : {})
       },
       ...options,
@@ -76,4 +79,19 @@ export function deleteProduct(id) {
 
 export function getLowStockProducts() {
   return request(`${BASE_URL}/low-stock`);
+}
+
+/**
+ * Uploads (or replaces) a product's image. Returns the full updated
+ * Product (including the new imagePath) so callers can refresh the UI
+ * immediately without a second request.
+ */
+export function uploadProductImage(id, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return request(`${ADMIN_PRODUCTS_BASE_URL}/${id}/image`, {
+    method: "POST",
+    body: formData,
+  });
 }

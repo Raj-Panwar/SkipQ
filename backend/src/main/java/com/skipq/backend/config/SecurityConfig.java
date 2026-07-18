@@ -59,6 +59,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/colleges/**").permitAll()
                         // Public: pre-login queue snapshot
                         .requestMatchers("/api/orders/queue/college/**").permitAll()
+                        // Public (GET only): serving print PDFs and product images.
+                        // Plain <a href> / <img src> tags cannot carry an
+                        // Authorization header, so these downloads must stay
+                        // public. Uploads (POST) remain behind auth below.
+                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         // Admin-only routes (admin auth/registration, college management)
                         .requestMatchers("/api/admins/**", "/api/colleges/**").hasRole("ADMIN")
                         // Everything else on /api/** requires any valid token

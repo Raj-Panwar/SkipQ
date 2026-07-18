@@ -35,8 +35,11 @@ public class NotificationController {
 
     // Shared by both the student and admin notification panels (no
     // separate admin markAsRead endpoint exists), so both roles are
-    // allowed here — matching the pre-JWT behavior where this endpoint
-    // had no role distinction at all.
+    // allowed to call this route. NotificationService.markAsRead enforces
+    // per-caller ownership internally (student → own notification only,
+    // admin → own college's admin-facing notifications only), so this
+    // shared route can't be used to touch another student's or another
+    // college's notifications.
     @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     @PutMapping("/{id}/read")
 public Map<String, String> markAsRead(

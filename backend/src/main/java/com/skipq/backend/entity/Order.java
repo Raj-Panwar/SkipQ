@@ -57,6 +57,9 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column(name = "notes", length = 1000)
+    private String notes;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -109,7 +112,7 @@ public class Order {
     }
 
     public String getStudentName() {
-        return student != null ? student.getFullName() : studentName;
+        return studentName;
     }
 
     public void setStudentName(String studentName) {
@@ -154,6 +157,14 @@ public class Order {
 
     public void setStudent(Student student) {
         this.student = student;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes == null ? null : notes.trim();
     }
 
 }
