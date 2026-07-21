@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - SkipQ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+
+<body class="auth-body">
+
+  <div class="auth-screen">
+
+    <header class="auth-topbar">
+      <span class="brand-mark">
+        <svg viewBox="0 0 40 40" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" />
+          <path d="M20 11 L20 20 L26 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <circle cx="29" cy="29" r="4.5" fill="currentColor" />
+        </svg>
+      </span>
+      <span class="brand-name-dark">SkipQ</span>
+    </header>
+
+    <main class="auth-sheet page-fade-in" aria-label="Verify email">
+
+      <div class="sheet-handle"></div>
+
+      <div class="auth-heading register-heading">
+        <h2>Verify your email</h2>
+        <p>
+          We sent a 6-digit code to
+          <strong id="otpEmailDisplay">your email</strong>.
+        </p>
+      </div>
+
+      <div id="formAlert" class="alert alert-error" hidden></div>
+
+      <form id="otpForm" class="form" novalidate>
+
+        <div class="form-group">
+          <label for="otpDigit0">Enter OTP</label>
+          <div class="otp-input-group" id="otpInputGroup">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" id="otpDigit0" autocomplete="one-time-code">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span class="btn-label">Verify & Create Account</span>
+        </button>
+
+        <div class="resend-row">
+          <button type="button" class="link-button" id="resendBtn" disabled>Resend OTP</button>
+          <span class="countdown-timer" id="countdownTimer"></span>
+        </div>
+
+      </form>
+
+      <p class="auth-switch">
+        Wrong email?
+        <button type="button" class="link-button" id="changeEmailBtn">Start over</button>
+      </p>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="../js/student/registerOtpPage.js"></script>
+
+</body>
+
+</html>

@@ -59,6 +59,78 @@ export function loginStudent(payload) {
 }
 
 /**
+ * POST /api/students/register/verify-otp
+ * @param {{ email, collegeCode, otp }} payload
+ * @returns {{ id, fullName, email, phoneNumber, collegeCode }}
+ */
+export function verifyRegisterOtp(payload) {
+  return request(`${BASE_URL}/register/verify-otp`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * POST /api/students/register/resend-otp
+ * @param {{ email, collegeCode }} payload
+ * @returns {{ message, expiresInSeconds }}
+ */
+export function resendRegisterOtp(payload) {
+  return request(`${BASE_URL}/register/resend-otp`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * POST /api/students/forgot-password
+ * Always resolves with a generic success message.
+ * @param {{ email, collegeCode }} payload
+ */
+export function forgotPassword(payload) {
+  return request(`${BASE_URL}/forgot-password`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * POST /api/students/forgot-password/resend-otp
+ * @param {{ email, collegeCode }} payload
+ * @returns {{ message, expiresInSeconds }}
+ */
+export function resendResetOtp(payload) {
+  return request(`${BASE_URL}/forgot-password/resend-otp`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * POST /api/students/forgot-password/verify-otp
+ * Verifies without consuming the OTP.
+ * @param {{ email, collegeCode, otp }} payload
+ */
+export function verifyResetOtp(payload) {
+  return request(`${BASE_URL}/forgot-password/verify-otp`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * POST /api/students/reset-password
+ * Re-validates and consumes the OTP, then updates the password.
+ * @param {{ email, collegeCode, otp, newPassword }} payload
+ */
+export function resetPassword(payload) {
+  return request(`${BASE_URL}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
  * GET /api/students/me
  * Identity comes from the JWT — no id needed.
  */

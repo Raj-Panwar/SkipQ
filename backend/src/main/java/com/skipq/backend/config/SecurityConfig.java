@@ -52,7 +52,15 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         // Public: student auth
-                        .requestMatchers("/api/students/register", "/api/students/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/students/register",
+                                "/api/students/register/verify-otp",
+                                "/api/students/register/resend-otp",
+                                "/api/students/login",
+                                "/api/students/forgot-password",
+                                "/api/students/forgot-password/verify-otp",
+                                "/api/students/forgot-password/resend-otp",
+                                "/api/students/reset-password").permitAll()
                         // Public: admin auth
                         .requestMatchers("/api/admins/login").permitAll()
                         // Public: college lookup (read-only)

@@ -88,13 +88,17 @@ form.addEventListener("submit", async (e) => {
       collegeCode: selectedCollegeCode,
       password,
     });
-showToast("Account created! Redirecting to login...", "success", 2000);
-form.reset();
-updateStrength("");
 
-setTimeout(() => {
-    window.location.replace("./login.html");
-}, 1500);
+    sessionStorage.setItem("pendingRegisterEmail", email);
+    sessionStorage.setItem("pendingRegisterCollegeCode", selectedCollegeCode);
+
+    showToast("OTP sent to your email.", "success", 2000);
+    form.reset();
+    updateStrength("");
+
+    setTimeout(() => {
+      window.location.replace("./register-otp.html");
+    }, 900);
   } catch (error) {
     formAlert.textContent = error.message || "Registration failed. Please try again.";
     formAlert.hidden = false;
